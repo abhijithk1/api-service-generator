@@ -8,13 +8,13 @@ import (
 )
 
 var (
-	InitialDirectories = []string{"/api", "/api/v1","/pkg", "/pkg/db", "/pkg/db/migrations", "/pkg/db/query"}
-	DependentPackages = []string{"github.com/gin-gonic/gin", "github.com/IBM/alchemy-logging/src/go/alog", "github.com/spf13/viper"}
+	InitialDirectories = []string{"/api", "/api/v1", "/pkg", "/pkg/db", "/pkg/db/migrations", "/pkg/db/query"}
+	DependentPackages  = []string{"github.com/gin-gonic/gin", "github.com/IBM/alchemy-logging/src/go/alog", "github.com/spf13/viper"}
 )
 
 // CommandExecutor defines the interface for executing commands
 type CommandExecutor interface {
-    ExecuteCmds(cmdStr string, cmdArgs []string) ([]byte, error)
+	ExecuteCmds(cmdStr string, cmdArgs []string) ([]byte, error)
 	CreateDirectory(path string) error
 	CreateFileAndItsContent(fileName string, fileData interface{}, content string) error
 }
@@ -25,10 +25,10 @@ var DefaultExecutor CommandExecutor = &realCommandExecutor{}
 type realCommandExecutor struct{}
 
 func (r *realCommandExecutor) ExecuteCmds(cmdStr string, cmdArgs []string) ([]byte, error) {
-    return exec.Command(cmdStr, cmdArgs...).Output()
+	return exec.Command(cmdStr, cmdArgs...).Output()
 }
 
-func(r *realCommandExecutor) CreateDirectory(path string) error {
+func (r *realCommandExecutor) CreateDirectory(path string) error {
 	return os.MkdirAll(path, 0777)
 }
 
@@ -55,17 +55,17 @@ func ExecuteGoGets() error {
 }
 
 func ExecuteCmds(cmdStr string, cmdArgs []string) ([]byte, error) {
-    return DefaultExecutor.ExecuteCmds(cmdStr, cmdArgs)
+	return DefaultExecutor.ExecuteCmds(cmdStr, cmdArgs)
 }
 
-//Function that Creates Directory of specific path
+// Function that Creates Directory of specific path
 func CreateDirectory(path string) error {
 	return DefaultExecutor.CreateDirectory(path)
 }
 
 // CreateFileAndItsContent creates a file with 0777 permissions and writes content to it using a template
 func (r *realCommandExecutor) CreateFileAndItsContent(fileName string, fileData interface{}, content string) error {
-	
+
 	// Create a new file with 0777 permissions
 	file, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0777)
 	if err != nil {
@@ -77,7 +77,7 @@ func (r *realCommandExecutor) CreateFileAndItsContent(fileName string, fileData 
 	tmpl, err := template.New("file").Parse(content)
 	if err != nil {
 		return fmt.Errorf("error parsing template : %w", err)
-		
+
 	}
 
 	// Execute the template and write to the file

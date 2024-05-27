@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-
 func TestSetTableQuery(t *testing.T) {
 	mockCmdsExecutor := mocks.NewMockCmdsExecutor()
 	common.DefaultExecutor = mockCmdsExecutor
@@ -54,6 +53,6 @@ func TestSetTableQuery_Error(t *testing.T) {
 	err := SetTableQuery(initSchema)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "error in creating query file and content")
-	
+
 	mockCmdsExecutor.AssertExpectations(t)
 }

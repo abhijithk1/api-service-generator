@@ -114,7 +114,6 @@ func TestWriteSchemaUpFile(t *testing.T) {
 
 	init_schema_up = schemaUp
 
-
 	initSchema := models.InitSchema{
 		TableName: "dummy",
 	}
@@ -124,7 +123,6 @@ func TestWriteSchemaUpFile(t *testing.T) {
 	err := writeSchemaUpFile(initSchema)
 	assert.NoError(t, err)
 	mockCmdsExecutor.AssertExpectations(t)
-
 
 	//Error case
 	mockCmdsExecutor = mocks.NewMockCmdsExecutor()
@@ -146,7 +144,6 @@ func TestWriteSchemaDownFile(t *testing.T) {
 	schemaDown := `DROP TABLE IF EXISTS dummy;`
 
 	init_schema_down = schemaDown
-
 
 	initSchema := models.InitSchema{
 		TableName: "dummy",
@@ -183,17 +180,16 @@ func TestPostgresMigration_Success(t *testing.T) {
 	fileName1 := "/init_schema_down.sql"
 	migrationUpFileName = fileName
 	migrationDownFileName = fileName1
-	
+
 	schemaUp := `CREATE TABLE IF NOT EXISTS dummy(
 		id PRIMARY KEY,
 		name VARCHAR(255)
 	);`
 
 	schemaDown := `DROP TABLE IF EXISTS dummy;`
-	
+
 	init_schema_up = schemaUp
 	init_schema_down = schemaDown
-
 
 	initSchema := models.InitSchema{
 		TableName: "dummy",
@@ -214,7 +210,7 @@ func TestPostgresMigration_Success(t *testing.T) {
 	mockCmdsExecutor.On("CreateFileAndItsContent", migrationDirectoryPath+fileName, initSchema, init_schema_up).Return(nil)
 	mockCmdsExecutor.On("CreateFileAndItsContent", migrationDirectoryPath+fileName1, initSchema, init_schema_down).Return(nil)
 	mockCmdsExecutor.On("ExecuteCmds", cmdStr1, cmdArgs1).Return([]byte(""), nil)
-	
+
 	err := PostgresMigration(dbInput, initSchema)
 	assert.NoError(t, err)
 	mockCmdsExecutor.AssertExpectations(t)
@@ -241,7 +237,7 @@ func TestPostgresMigration_InitialiseError(t *testing.T) {
 	}
 
 	mockCmdsExecutor.On("ExecuteCmds", cmdStr, cmdArgs).Return([]byte(""), errors.New("error in creating migration"))
-	
+
 	err := PostgresMigration(dbInput, initSchema)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "error in creating migration")
@@ -261,12 +257,12 @@ func TestPostgresMigration_WriteSchemaUpFIleError(t *testing.T) {
 
 	fileName := "/init_schema_up.sql"
 	migrationUpFileName = fileName
-	
+
 	schemaUp := `CREATE TABLE IF NOT EXISTS dummy(
 		id PRIMARY KEY,
 		name VARCHAR(255)
 	);`
-	
+
 	init_schema_up = schemaUp
 
 	initSchema := models.InitSchema{
@@ -281,7 +277,7 @@ func TestPostgresMigration_WriteSchemaUpFIleError(t *testing.T) {
 
 	mockCmdsExecutor.On("ExecuteCmds", cmdStr, cmdArgs).Return([]byte(""), nil)
 	mockCmdsExecutor.On("CreateFileAndItsContent", migrationDirectoryPath+fileName, initSchema, init_schema_up).Return(errors.New("error writing init schema up sql file"))
-	
+
 	err := PostgresMigration(dbInput, initSchema)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "error writing init schema up sql file")
@@ -303,17 +299,16 @@ func TestPostgresMigration_WriteSchemaDownFileError(t *testing.T) {
 	fileName1 := "/init_schema_down.sql"
 	migrationUpFileName = fileName
 	migrationDownFileName = fileName1
-	
+
 	schemaUp := `CREATE TABLE IF NOT EXISTS dummy(
 		id PRIMARY KEY,
 		name VARCHAR(255)
 	);`
 
 	schemaDown := `DROP TABLE IF EXISTS dummy;`
-	
+
 	init_schema_up = schemaUp
 	init_schema_down = schemaDown
-
 
 	initSchema := models.InitSchema{
 		TableName: "dummy",
@@ -328,7 +323,7 @@ func TestPostgresMigration_WriteSchemaDownFileError(t *testing.T) {
 	mockCmdsExecutor.On("ExecuteCmds", cmdStr, cmdArgs).Return([]byte(""), nil)
 	mockCmdsExecutor.On("CreateFileAndItsContent", migrationDirectoryPath+fileName, initSchema, init_schema_up).Return(nil)
 	mockCmdsExecutor.On("CreateFileAndItsContent", migrationDirectoryPath+fileName1, initSchema, init_schema_down).Return(errors.New("error in writing init schema down sql file"))
-	
+
 	err := PostgresMigration(dbInput, initSchema)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "error in writing init schema down sql file")
@@ -350,17 +345,16 @@ func TestPostgresMigration_MigrationUpError(t *testing.T) {
 	fileName1 := "/init_schema_down.sql"
 	migrationUpFileName = fileName
 	migrationDownFileName = fileName1
-	
+
 	schemaUp := `CREATE TABLE IF NOT EXISTS dummy(
 		id PRIMARY KEY,
 		name VARCHAR(255)
 	);`
 
 	schemaDown := `DROP TABLE IF EXISTS dummy;`
-	
+
 	init_schema_up = schemaUp
 	init_schema_down = schemaDown
-
 
 	initSchema := models.InitSchema{
 		TableName: "dummy",
@@ -381,7 +375,7 @@ func TestPostgresMigration_MigrationUpError(t *testing.T) {
 	mockCmdsExecutor.On("CreateFileAndItsContent", migrationDirectoryPath+fileName, initSchema, init_schema_up).Return(nil)
 	mockCmdsExecutor.On("CreateFileAndItsContent", migrationDirectoryPath+fileName1, initSchema, init_schema_down).Return(nil)
 	mockCmdsExecutor.On("ExecuteCmds", cmdStr1, cmdArgs1).Return([]byte(""), errors.New("error in migrating up"))
-	
+
 	err := PostgresMigration(dbInput, initSchema)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "error in migrating up")

@@ -17,7 +17,7 @@ var (
 	migrationDownFileName  = "/000001_init_schema_down.sql"
 )
 
-func PostgresMigration(dbInputs models.DBInputs, initSchema models.InitSchema) (err error){
+func PostgresMigration(dbInputs models.DBInputs, initSchema models.InitSchema) (err error) {
 	err = initialiseMigration()
 	if err != nil {
 		return
