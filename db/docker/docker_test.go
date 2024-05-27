@@ -2,31 +2,36 @@ package docker
 
 import (
 	"errors"
-	"os"
+	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/abhijithk1/api-service-generator/common"
 	"github.com/abhijithk1/api-service-generator/mocks"
+	"github.com/abhijithk1/api-service-generator/models"
 	"github.com/stretchr/testify/assert"
 )
-
-
-func TestMain(m *testing.M) {
-	os.Exit(m.Run())
-}
 
 func TestRunDockerContainer_Success(t *testing.T) {
 	mockCmdsExecutor := mocks.NewMockCmdsExecutor()
 	common.DefaultExecutor = mockCmdsExecutor
 
-	postgresRun = `docker run postgres`
+	dbInput := models.DBInputs{
+		PsqlUser:     "root",
+		PsqlPassword: "password",
+		DBName:       "postgres",
+	}
 
-	cmdStr := "docker"
-	cmdArgs := []string{"run", "postgres"}
+	runCmd := fmt.Sprintf("docker run --name postgres_db -p 5432:5432 -e POSTGRES_USER=%s -e POSTGRES_PASSWORD=%s POSTGRES_DB=%s -d postgres", "root", "password", "postgres")
+
+	cmdSplits := strings.Split(runCmd, " ")
+
+	cmdStr := cmdSplits[0]
+	cmdArgs := cmdSplits[1:]
 
 	mockCmdsExecutor.On("ExecuteCmds", cmdStr, cmdArgs).Return([]byte(""), nil)
 
-	err := RunPostgresContainer()
+	err := RunPostgresContainer(dbInput)
 	assert.NoError(t, err)
 
 	mockCmdsExecutor.AssertExpectations(t)
@@ -36,14 +41,22 @@ func TestRunDockerContainer_Error(t *testing.T) {
 	mockCmdsExecutor := mocks.NewMockCmdsExecutor()
 	common.DefaultExecutor = mockCmdsExecutor
 
-	postgresRun = `docker run postgres`
+	dbInput := models.DBInputs{
+		PsqlUser:     "root",
+		PsqlPassword: "password",
+		DBName:       "postgres",
+	}
 
-	cmdStr := "docker"
-	cmdArgs := []string{"run", "postgres"}
+	runCmd := fmt.Sprintf("docker run --name postgres_db -p 5432:5432 -e POSTGRES_USER=%s -e POSTGRES_PASSWORD=%s POSTGRES_DB=%s -d postgres", "root", "password", "postgres")
+
+	cmdSplits := strings.Split(runCmd, " ")
+
+	cmdStr := cmdSplits[0]
+	cmdArgs := cmdSplits[1:]
 
 	mockCmdsExecutor.On("ExecuteCmds", cmdStr, cmdArgs).Return([]byte(""), errors.New("error in running docker run"))
 
-	err := RunPostgresContainer()
+	err := RunPostgresContainer(dbInput)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "error in running docker run")
 
