@@ -9,17 +9,10 @@ import (
 	"os"
 	"strings"
 
+	"github.com/abhijithk1/api-service-generator/common"
+	"github.com/abhijithk1/api-service-generator/db"
+	"github.com/abhijithk1/api-service-generator/models"
 	"github.com/spf13/cobra"
-)
-
-var (
-	Name         string
-	DBMS         string
-	DBName       string
-	PsqlUser     string
-	PsqlPassword string
-	TableName    string
-	APIName      string
 )
 
 // generateTemplateCmd represents the generateTemplate command
@@ -30,65 +23,80 @@ var generateTemplateCmd = &cobra.Command{
 
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("generateTemplate called.......")
-		Name, _ = cmd.Flags().GetString("name")
-		if Name == "" {
+		dbInputs := models.DBInputs{}
+		apiInputs := models.APIInputs{}
+
+		dbInputs.WrkDir, _ = cmd.Flags().GetString("name")
+		if dbInputs.WrkDir == "" {
 			fmt.Println("Name should be provided")
 			fmt.Println("\nUsage: api-service-generator generateTemplate --name <name>")
 			return
 		}
 
-		fmt.Printf("Name is : %s\n", Name)
+		apiInputs.WrkDir = dbInputs.WrkDir
+		fmt.Printf("Name is : %s\n", dbInputs.WrkDir)
 
 		// Prompt the user for additional input
 		reader := bufio.NewReader(os.Stdin)
 
 		fmt.Print("DBMS (currently supports only Postgres): ")
-		DBMS, _ = reader.ReadString('\n')
-		DBMS = strings.ToLower(strings.TrimSpace(DBMS))
-		if DBMS == "" {
+		dbInputs.DBMS, _ = reader.ReadString('\n')
+		dbInputs.DBMS = strings.ToLower(strings.TrimSpace(dbInputs.DBMS))
+		if dbInputs.DBMS == "" {
 			fmt.Println("DBMS value is empty, by default using Postgres")
-			DBMS = "postgres"
+			dbInputs.DBMS = "postgres"
+		}
+
+		fmt.Print("Enter the name for the Postgres Docker container: ")
+		dbInputs.ContainerName, _ = reader.ReadString('\n')
+		dbInputs.ContainerName = strings.ToLower(strings.TrimSpace(dbInputs.ContainerName))
+		if dbInputs.ContainerName == "" {
+			fmt.Println("Container name value is empty, by default using postgres_db")
+			dbInputs.ContainerName = "postgres_db"
 		}
 
 		fmt.Print("Enter the POSTGRES_USER: ")
-		PsqlUser, _ = reader.ReadString('\n')
-		PsqlUser = strings.ToLower(strings.TrimSpace(PsqlUser))
-		if PsqlUser == "" {
+		dbInputs.PsqlUser, _ = reader.ReadString('\n')
+		dbInputs.PsqlUser = strings.ToLower(strings.TrimSpace(dbInputs.PsqlUser))
+		if dbInputs.PsqlUser == "" {
 			fmt.Println("Database value is empty, by default using the value as 'postgres'")
-			PsqlUser = "postgres"
+			dbInputs.PsqlUser = "postgres"
 		}
 
 		fmt.Print("Enter the POSTGRES_PASSWORD: ")
-		PsqlPassword, _ = reader.ReadString('\n')
-		PsqlPassword = strings.ToLower(strings.TrimSpace(PsqlPassword))
-		if PsqlPassword == "" {
+		dbInputs.PsqlPassword, _ = reader.ReadString('\n')
+		dbInputs.PsqlPassword = strings.ToLower(strings.TrimSpace(dbInputs.PsqlPassword))
+		if dbInputs.PsqlPassword == "" {
 			fmt.Println("Database value is empty, by default using value as 'password'")
-			PsqlPassword = "password"
+			dbInputs.PsqlPassword = "password"
 		}
 
 		fmt.Print("Enter the Name of the Database: ")
-		DBName, _ = reader.ReadString('\n')
-		DBName = strings.ToLower(strings.TrimSpace(DBName))
-		if DBName == "" {
+		dbInputs.DBName, _ = reader.ReadString('\n')
+		dbInputs.DBName = strings.ToLower(strings.TrimSpace(dbInputs.DBName))
+		if dbInputs.DBName == "" {
 			fmt.Println("Database value is empty, by default using the value of POSTGRES_USER")
-			DBName = PsqlUser
+			dbInputs.DBName = dbInputs.PsqlUser
 		}
 
-		fmt.Print("\nEnter a Table Name: ")
-		TableName, _ = reader.ReadString('\n')
-		TableName = strings.TrimSpace(TableName)
-		if TableName == "" {
+		fmt.Print("Enter a Table Name: ")
+		dbInputs.TableName, _ = reader.ReadString('\n')
+		dbInputs.TableName = strings.TrimSpace(dbInputs.TableName)
+		if dbInputs.TableName == "" {
 			fmt.Println("Table name is empty, by default using the name 'api_table'")
-			TableName = "api_table"
+			dbInputs.TableName = "api_table"
 		}
 
-		fmt.Print("\nEnter a API Group: ")
-		APIName, _ = reader.ReadString('\n')
-		APIName = strings.TrimSpace(APIName)
-		if APIName == "" {
+		fmt.Print("Enter a API Group: ")
+		apiInputs.APIGroup, _ = reader.ReadString('\n')
+		apiInputs.APIGroup = strings.TrimSpace(apiInputs.APIGroup)
+		if apiInputs.APIGroup == "" {
 			fmt.Println("API Group is empty, by default using the name 'dummy'")
-			APIName = "dummy"
+			apiInputs.APIGroup = "dummy"
 		}
+
+		common.Initialise("example", dbInputs.WrkDir)
+		db.Setup(dbInputs)
 	},
 }
 

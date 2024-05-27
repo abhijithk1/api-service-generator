@@ -22,9 +22,11 @@ func TestInitialiseMigration_Success(t *testing.T) {
 	cmdStr := cmdSplits[0]
 	cmdArgs := cmdSplits[1:]
 
-	mockCmdsExecutor.On("ExecuteCmds", cmdStr, cmdArgs).Return([]byte(""), nil)
+	wrkDir := "file"
 
-	err := initialiseMigration()
+	mockCmdsExecutor.On("ExecuteCmds", cmdStr, cmdArgs, wrkDir).Return([]byte(""), nil)
+
+	err := initialiseMigration(wrkDir)
 	assert.NoError(t, err)
 
 	mockCmdsExecutor.AssertExpectations(t)
@@ -41,9 +43,11 @@ func TestInitialiseMigration_Error(t *testing.T) {
 	cmdStr := cmdSplits[0]
 	cmdArgs := cmdSplits[1:]
 
-	mockCmdsExecutor.On("ExecuteCmds", cmdStr, cmdArgs).Return([]byte(""), errors.New("error in initialising"))
+	wrkDir := "file"
 
-	err := initialiseMigration()
+	mockCmdsExecutor.On("ExecuteCmds", cmdStr, cmdArgs, wrkDir).Return([]byte(""), errors.New("error in initialising"))
+
+	err := initialiseMigration(wrkDir)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "error in initialising")
 
@@ -58,6 +62,7 @@ func TestMigrationUp_Success(t *testing.T) {
 		PsqlUser:     "root",
 		PsqlPassword: "password",
 		DBName:       "postgres",
+		WrkDir:       "wrkdir",
 	}
 
 	runCmd := fmt.Sprintf(MigrateUp, "postgresql", "root", "password", "postgres")
@@ -67,7 +72,7 @@ func TestMigrationUp_Success(t *testing.T) {
 	cmdStr := cmdSplits[0]
 	cmdArgs := cmdSplits[1:]
 
-	mockCmdsExecutor.On("ExecuteCmds", cmdStr, cmdArgs).Return([]byte(""), nil)
+	mockCmdsExecutor.On("ExecuteCmds", cmdStr, cmdArgs, dbInput.WrkDir).Return([]byte(""), nil)
 
 	err := migrationUp(dbInput)
 	assert.NoError(t, err)
@@ -83,6 +88,7 @@ func TestMigrationUp_Error(t *testing.T) {
 		PsqlUser:     "root",
 		PsqlPassword: "password",
 		DBName:       "postgres",
+		WrkDir:       "wrkdir",
 	}
 
 	runCmd := fmt.Sprintf(MigrateUp, "postgresql", "root", "password", "postgres")
@@ -92,7 +98,7 @@ func TestMigrationUp_Error(t *testing.T) {
 	cmdStr := cmdSplits[0]
 	cmdArgs := cmdSplits[1:]
 
-	mockCmdsExecutor.On("ExecuteCmds", cmdStr, cmdArgs).Return([]byte(""), errors.New("error in migrating"))
+	mockCmdsExecutor.On("ExecuteCmds", cmdStr, cmdArgs, dbInput.WrkDir).Return([]byte(""), errors.New("error in migrating"))
 
 	err := migrationUp(dbInput)
 	assert.Error(t, err)
@@ -199,6 +205,7 @@ func TestPostgresMigration_Success(t *testing.T) {
 		PsqlUser:     "root",
 		PsqlPassword: "password",
 		DBName:       "postgres",
+		WrkDir:       "wrkdir",
 	}
 
 	runCmd1 := fmt.Sprintf(MigrateUp, "postgresql", "root", "password", "postgres")
@@ -206,10 +213,10 @@ func TestPostgresMigration_Success(t *testing.T) {
 	cmdStr1 := cmdSplits1[0]
 	cmdArgs1 := cmdSplits1[1:]
 
-	mockCmdsExecutor.On("ExecuteCmds", cmdStr, cmdArgs).Return([]byte(""), nil)
+	mockCmdsExecutor.On("ExecuteCmds", cmdStr, cmdArgs, dbInput.WrkDir).Return([]byte(""), nil)
 	mockCmdsExecutor.On("CreateFileAndItsContent", migrationDirectoryPath+fileName, initSchema, init_schema_up).Return(nil)
 	mockCmdsExecutor.On("CreateFileAndItsContent", migrationDirectoryPath+fileName1, initSchema, init_schema_down).Return(nil)
-	mockCmdsExecutor.On("ExecuteCmds", cmdStr1, cmdArgs1).Return([]byte(""), nil)
+	mockCmdsExecutor.On("ExecuteCmds", cmdStr1, cmdArgs1, dbInput.WrkDir).Return([]byte(""), nil)
 
 	err := PostgresMigration(dbInput, initSchema)
 	assert.NoError(t, err)
@@ -234,9 +241,10 @@ func TestPostgresMigration_InitialiseError(t *testing.T) {
 		PsqlUser:     "root",
 		PsqlPassword: "password",
 		DBName:       "postgres",
+		WrkDir:       "wrkdir",
 	}
 
-	mockCmdsExecutor.On("ExecuteCmds", cmdStr, cmdArgs).Return([]byte(""), errors.New("error in creating migration"))
+	mockCmdsExecutor.On("ExecuteCmds", cmdStr, cmdArgs, dbInput.WrkDir).Return([]byte(""), errors.New("error in creating migration"))
 
 	err := PostgresMigration(dbInput, initSchema)
 	assert.Error(t, err)
@@ -273,9 +281,10 @@ func TestPostgresMigration_WriteSchemaUpFIleError(t *testing.T) {
 		PsqlUser:     "root",
 		PsqlPassword: "password",
 		DBName:       "postgres",
+		WrkDir:       "wrkdir",
 	}
 
-	mockCmdsExecutor.On("ExecuteCmds", cmdStr, cmdArgs).Return([]byte(""), nil)
+	mockCmdsExecutor.On("ExecuteCmds", cmdStr, cmdArgs, dbInput.WrkDir).Return([]byte(""), nil)
 	mockCmdsExecutor.On("CreateFileAndItsContent", migrationDirectoryPath+fileName, initSchema, init_schema_up).Return(errors.New("error writing init schema up sql file"))
 
 	err := PostgresMigration(dbInput, initSchema)
@@ -318,9 +327,10 @@ func TestPostgresMigration_WriteSchemaDownFileError(t *testing.T) {
 		PsqlUser:     "root",
 		PsqlPassword: "password",
 		DBName:       "postgres",
+		WrkDir:       "wrkdir",
 	}
 
-	mockCmdsExecutor.On("ExecuteCmds", cmdStr, cmdArgs).Return([]byte(""), nil)
+	mockCmdsExecutor.On("ExecuteCmds", cmdStr, cmdArgs, dbInput.WrkDir).Return([]byte(""), nil)
 	mockCmdsExecutor.On("CreateFileAndItsContent", migrationDirectoryPath+fileName, initSchema, init_schema_up).Return(nil)
 	mockCmdsExecutor.On("CreateFileAndItsContent", migrationDirectoryPath+fileName1, initSchema, init_schema_down).Return(errors.New("error in writing init schema down sql file"))
 
@@ -364,6 +374,7 @@ func TestPostgresMigration_MigrationUpError(t *testing.T) {
 		PsqlUser:     "root",
 		PsqlPassword: "password",
 		DBName:       "postgres",
+		WrkDir:       "wrkdir",
 	}
 
 	runCmd1 := fmt.Sprintf(MigrateUp, "postgresql", "root", "password", "postgres")
@@ -371,10 +382,10 @@ func TestPostgresMigration_MigrationUpError(t *testing.T) {
 	cmdStr1 := cmdSplits1[0]
 	cmdArgs1 := cmdSplits1[1:]
 
-	mockCmdsExecutor.On("ExecuteCmds", cmdStr, cmdArgs).Return([]byte(""), nil)
+	mockCmdsExecutor.On("ExecuteCmds", cmdStr, cmdArgs, dbInput.WrkDir).Return([]byte(""), nil)
 	mockCmdsExecutor.On("CreateFileAndItsContent", migrationDirectoryPath+fileName, initSchema, init_schema_up).Return(nil)
 	mockCmdsExecutor.On("CreateFileAndItsContent", migrationDirectoryPath+fileName1, initSchema, init_schema_down).Return(nil)
-	mockCmdsExecutor.On("ExecuteCmds", cmdStr1, cmdArgs1).Return([]byte(""), errors.New("error in migrating up"))
+	mockCmdsExecutor.On("ExecuteCmds", cmdStr1, cmdArgs1, dbInput.WrkDir).Return([]byte(""), errors.New("error in migrating up"))
 
 	err := PostgresMigration(dbInput, initSchema)
 	assert.Error(t, err)

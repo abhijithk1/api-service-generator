@@ -56,9 +56,11 @@ func TestCommandExecuter_ExecuteCmds(t *testing.T) {
 	cmdStr := "ls"
 	cmdArgs := []string{"-l"}
 
+	pwd, _ := os.Getwd()
+
 	executor := &realCommandExecutor{}
 
-	_, err := executor.ExecuteCmds(cmdStr, cmdArgs)
+	_, err := executor.ExecuteCmds(cmdStr, cmdArgs, pwd)
 
 	assert.NoError(t, err)
 
@@ -71,12 +73,13 @@ func TestExecuteCmds(t *testing.T) {
 	// Set up test data
 	cmdStr := "ls"
 	cmdArgs := []string{"-l"}
+	pwd := "file"
 
-	mockExec.On("ExecuteCmds", cmdStr, cmdArgs).Return([]byte(""), nil)
+	mockExec.On("ExecuteCmds", cmdStr, cmdArgs, pwd).Return([]byte(""), nil)
 
 	executor := mockExec
 
-	_, err := executor.ExecuteCmds(cmdStr, cmdArgs)
+	_, err := executor.ExecuteCmds(cmdStr, cmdArgs, pwd)
 	assert.NoError(t, err)
 
 	mockExec.AssertExpectations(t)
@@ -228,7 +231,7 @@ func TestExecuteGoMod_Success(t *testing.T) {
 	cmdStr := "go"
 	cmdArgs := []string{"mod", "init", modName}
 
-	mockExec.On("ExecuteCmds", cmdStr, cmdArgs).Return([]byte(""), nil)
+	mockExec.On("ExecuteCmds", cmdStr, cmdArgs, name).Return([]byte(""), nil)
 
 	err := ExecuteGoMod(path, name)
 	assert.NoError(t, err)
@@ -246,7 +249,7 @@ func TestExecuteGoMod_MockError(t *testing.T) {
 	cmdStr := "go"
 	cmdArgs := []string{"mod", "init", modName}
 
-	mockExec.On("ExecuteCmds", cmdStr, cmdArgs).Return([]byte(""), errors.New("error in initialising go module"))
+	mockExec.On("ExecuteCmds", cmdStr, cmdArgs, name).Return([]byte(""), errors.New("error in initialising go module"))
 
 	err := ExecuteGoMod(path, name)
 	assert.Error(t, err)
@@ -258,15 +261,17 @@ func TestExecuteGoGets_Success(t *testing.T) {
 	mockExec := mocks.NewMockCmdsExecutor()
 	DefaultExecutor = mockExec
 
+	wrkDir := "dir"
+
 	DependentPackages = []string{"github.com/some/package", "github.com/another/package"}
 	cmdStr := "go"
 	CmdArgs1 := []string{"get", "github.com/some/package"}
 	CmdArgs2 := []string{"get", "github.com/another/package"}
 
-	mockExec.On("ExecuteCmds", cmdStr, CmdArgs1).Return([]byte(""), nil)
-	mockExec.On("ExecuteCmds", cmdStr, CmdArgs2).Return([]byte(""), nil)
+	mockExec.On("ExecuteCmds", cmdStr, CmdArgs1, wrkDir).Return([]byte(""), nil)
+	mockExec.On("ExecuteCmds", cmdStr, CmdArgs2, wrkDir).Return([]byte(""), nil)
 
-	err := ExecuteGoGets()
+	err := ExecuteGoGets(wrkDir)
 	assert.NoError(t, err)
 	mockExec.AssertExpectations(t)
 }
@@ -275,13 +280,15 @@ func TestExecuteGoGets_Error(t *testing.T) {
 	mockExec := mocks.NewMockCmdsExecutor()
 	DefaultExecutor = mockExec
 
+	wrkDir := "dir"
+
 	DependentPackages = []string{"github.com/some/package"}
 	cmdStr := "go"
 	CmdArgs := []string{"get", "github.com/some/package"}
 
-	mockExec.On("ExecuteCmds", cmdStr, CmdArgs).Return([]byte(""), errors.New("error in downloading go package"))
+	mockExec.On("ExecuteCmds", cmdStr, CmdArgs, wrkDir).Return([]byte(""), errors.New("error in downloading go package"))
 
-	err := ExecuteGoGets()
+	err := ExecuteGoGets(wrkDir)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "error in downloading go package")
 	mockExec.AssertExpectations(t)
@@ -306,10 +313,10 @@ func TestInitialise_Success(t *testing.T) {
 
 	// Set up mock expectations
 	mockExec.On("CreateDirectory", name).Return(nil)
-	mockExec.On("ExecuteCmds", "cd", []string{name}).Return([]byte(""), nil)
-	mockExec.On("ExecuteCmds", cmdGoStr, cmdArgs1).Return([]byte(""), nil)
-	mockExec.On("ExecuteCmds", cmdGoStr, cmdArgs2).Return([]byte(""), nil)
+	mockExec.On("ExecuteCmds", cmdGoStr, cmdArgs1, name).Return([]byte(""), nil)
+	mockExec.On("ExecuteCmds", cmdGoStr, cmdArgs2, name).Return([]byte(""), nil)
 	for _, dir := range initialDirs {
+		dir = name + dir
 		mockExec.On("CreateDirectory", dir).Return(nil)
 	}
 
@@ -358,24 +365,6 @@ func TestInitialise_ErrorCreateDirectory(t *testing.T) {
 
 }
 
-func TestInitialise_ErrorExecutingCmd(t *testing.T) {
-	// Create a mock executor
-	mockExec := mocks.NewMockCmdsExecutor()
-	DefaultExecutor = mockExec
-
-	// Set up test data
-	path := "example/path"
-	name := "example"
-
-	// Set up mock expectations
-	mockExec.On("CreateDirectory", name).Return(nil)
-	mockExec.On("ExecuteCmds", "cd", []string{name}).Return([]byte(""), errors.New("error executing command"))
-
-	Initialise(path, name)
-
-	mockExec.AssertExpectations(t)
-}
-
 func TestInitialise_ErrorExecutingGoMod(t *testing.T) {
 	// Create a mock executor
 	mockExec := mocks.NewMockCmdsExecutor()
@@ -390,8 +379,7 @@ func TestInitialise_ErrorExecutingGoMod(t *testing.T) {
 
 	// Set up mock expectations
 	mockExec.On("CreateDirectory", name).Return(nil)
-	mockExec.On("ExecuteCmds", "cd", []string{name}).Return([]byte(""), nil)
-	mockExec.On("ExecuteCmds", cmdGoStr, cmdArgs1).Return([]byte(""), errors.New("error in go mod command"))
+	mockExec.On("ExecuteCmds", cmdGoStr, cmdArgs1, name).Return([]byte(""), errors.New("error in go mod command"))
 
 	Initialise(path, name)
 
@@ -415,9 +403,8 @@ func TestInitialise_ErrorExecutingGoGets(t *testing.T) {
 
 	// Set up mock expectations
 	mockExec.On("CreateDirectory", name).Return(nil)
-	mockExec.On("ExecuteCmds", "cd", []string{name}).Return([]byte(""), nil)
-	mockExec.On("ExecuteCmds", cmdGoStr, cmdArgs1).Return([]byte(""), nil)
-	mockExec.On("ExecuteCmds", cmdGoStr, cmdArgs2).Return([]byte(""), errors.New("error executing go get command"))
+	mockExec.On("ExecuteCmds", cmdGoStr, cmdArgs1, name).Return([]byte(""), nil)
+	mockExec.On("ExecuteCmds", cmdGoStr, cmdArgs2, name).Return([]byte(""), errors.New("error executing go get command"))
 
 	Initialise(path, name)
 
@@ -443,10 +430,10 @@ func TestInitialise_ErrorCreatingInitalDirectories(t *testing.T) {
 
 	// Set up mock expectations
 	mockExec.On("CreateDirectory", name).Return(nil)
-	mockExec.On("ExecuteCmds", "cd", []string{name}).Return([]byte(""), nil)
-	mockExec.On("ExecuteCmds", cmdGoStr, cmdArgs1).Return([]byte(""), nil)
-	mockExec.On("ExecuteCmds", cmdGoStr, cmdArgs2).Return([]byte(""), nil)
+	mockExec.On("ExecuteCmds", cmdGoStr, cmdArgs1, name).Return([]byte(""), nil)
+	mockExec.On("ExecuteCmds", cmdGoStr, cmdArgs2, name).Return([]byte(""), nil)
 	for _, dir := range InitialDirectories {
+		dir = name + dir
 		mockExec.On("CreateDirectory", dir).Return(errors.New("error creating initial directory"))
 	}
 

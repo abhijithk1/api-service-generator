@@ -14,10 +14,12 @@ func TestSetTableQuery(t *testing.T) {
 	mockCmdsExecutor := mocks.NewMockCmdsExecutor()
 	common.DefaultExecutor = mockCmdsExecutor
 
-	fileName := "dummy.sql"
+	fileName := "test/pkg/db/query/dummy.sql"
 	initSchema := models.InitSchema{
 		TableName: "dummy",
+		WrkDir:    "test",
 	}
+
 	query_sql := `
 	-- name: Listdummy :many
 		SELECT * FROM dummy;
@@ -37,9 +39,10 @@ func TestSetTableQuery_Error(t *testing.T) {
 	mockCmdsExecutor := mocks.NewMockCmdsExecutor()
 	common.DefaultExecutor = mockCmdsExecutor
 
-	fileName := "dummy.sql"
+	fileName := "test/pkg/db/query/dummy.sql"
 	initSchema := models.InitSchema{
 		TableName: "dummy",
+		WrkDir:    "test",
 	}
 	query_sql := `
 	-- name: Listdummy :many

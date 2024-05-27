@@ -14,7 +14,7 @@ var (
 
 // CommandExecutor defines the interface for executing commands
 type CommandExecutor interface {
-	ExecuteCmds(cmdStr string, cmdArgs []string) ([]byte, error)
+	ExecuteCmds(cmdStr string, cmdArgs []string, workDir string) ([]byte, error)
 	CreateDirectory(path string) error
 	CreateFileAndItsContent(fileName string, fileData interface{}, content string) error
 }
@@ -24,8 +24,10 @@ var DefaultExecutor CommandExecutor = &realCommandExecutor{}
 
 type realCommandExecutor struct{}
 
-func (r *realCommandExecutor) ExecuteCmds(cmdStr string, cmdArgs []string) ([]byte, error) {
-	return exec.Command(cmdStr, cmdArgs...).Output()
+func (r *realCommandExecutor) ExecuteCmds(cmdStr string, cmdArgs []string, workDir string) ([]byte, error) {
+	cmd := exec.Command(cmdStr, cmdArgs...)
+	cmd.Dir = workDir
+	return cmd.CombinedOutput()
 }
 
 func (r *realCommandExecutor) CreateDirectory(path string) error {
@@ -35,7 +37,7 @@ func (r *realCommandExecutor) CreateDirectory(path string) error {
 func ExecuteGoMod(path, name string) error {
 	modName := fmt.Sprintf("%s/%s", path, name)
 
-	_, err := ExecuteCmds("go", []string{"mod", "init", modName})
+	_, err := ExecuteCmds("go", []string{"mod", "init", modName}, name)
 	if err != nil {
 		return fmt.Errorf("error in initialising go module: %w", err)
 	}
@@ -43,9 +45,9 @@ func ExecuteGoMod(path, name string) error {
 	return nil
 }
 
-func ExecuteGoGets() error {
+func ExecuteGoGets(wrkDir string) error {
 	for _, pkg := range DependentPackages {
-		_, err := ExecuteCmds("go", []string{"get", pkg})
+		_, err := ExecuteCmds("go", []string{"get", pkg}, wrkDir)
 		if err != nil {
 			return fmt.Errorf("error in downloading go package %s : %w", pkg, err)
 		}
@@ -54,8 +56,8 @@ func ExecuteGoGets() error {
 	return nil
 }
 
-func ExecuteCmds(cmdStr string, cmdArgs []string) ([]byte, error) {
-	return DefaultExecutor.ExecuteCmds(cmdStr, cmdArgs)
+func ExecuteCmds(cmdStr string, cmdArgs []string, workDir string) ([]byte, error) {
+	return DefaultExecutor.ExecuteCmds(cmdStr, cmdArgs, workDir)
 }
 
 // Function that Creates Directory of specific path
@@ -95,24 +97,18 @@ func CreateFileAndItsContent(fileName string, fileData interface{}, content stri
 	return DefaultExecutor.CreateFileAndItsContent(fileName, fileData, content)
 }
 
-func Initialise(path, name string) {
+func Initialise(path, serviceName string) {
 
-	fmt.Printf("*** Creating the Service Directory %s ***\n", name)
-	err := CreateDirectory(name)
+	fmt.Printf("*** Creating the Service Directory %s ***\n", serviceName)
+	err := CreateDirectory(serviceName)
 	if err != nil {
 		fmt.Println("Error : ", err)
 		return
 	}
-	fmt.Printf("*** Successfully created the Service Directory %s ***\n", name)
-
-	_, err = ExecuteCmds("cd", []string{name})
-	if err != nil {
-		fmt.Println("Error : ", err)
-		return
-	}
+	fmt.Printf("*** Successfully created the Service Directory %s ***\n", serviceName)
 
 	fmt.Println("*** Creating go.mod ***")
-	err = ExecuteGoMod(path, name)
+	err = ExecuteGoMod(path, serviceName)
 	if err != nil {
 		fmt.Println("Error : ", err)
 		return
@@ -120,7 +116,7 @@ func Initialise(path, name string) {
 	fmt.Println("*** Successfully created go.mod ***")
 
 	fmt.Println("*** Updating go packages ***")
-	err = ExecuteGoGets()
+	err = ExecuteGoGets(serviceName)
 	if err != nil {
 		fmt.Println("Error : ", err)
 		return
@@ -129,6 +125,7 @@ func Initialise(path, name string) {
 
 	fmt.Println("*** Creating the initial Directories ***")
 	for _, dir := range InitialDirectories {
+		dir = serviceName + dir
 		err = CreateDirectory(dir)
 		if err != nil {
 			fmt.Println("Error : ", err)

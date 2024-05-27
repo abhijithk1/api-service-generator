@@ -10,15 +10,15 @@ import (
 
 var (
 	MigrateCreateTemplate  = `migrate create -ext sql -dir pkg/db/migrations -seq init_schema`
-	MigrateUp              = `migrate -path db/migration -database "%s://%s:%s@localhost:5432/%s?sslmode=disable" -verbose up`
-	MigrateDown            = `migrate -path db/migration -database "%s://%s:%s@localhost:5432/%s?sslmode=disable" -verbose down`
+	MigrateUp              = `migrate -path pkg/db/migrations -database "%s://%s:%s@localhost:5432/%s?sslmode=disable" -verbose up`
+	MigrateDown            = `migrate -path pkg/db/migrations -database "%s://%s:%s@localhost:5432/%s?sslmode=disable" -verbose down`
 	migrationDirectoryPath = "/pkg/db/migrations"
 	migrationUpFileName    = "/000001_init_schema_up.sql"
 	migrationDownFileName  = "/000001_init_schema_down.sql"
 )
 
 func PostgresMigration(dbInputs models.DBInputs, initSchema models.InitSchema) (err error) {
-	err = initialiseMigration()
+	err = initialiseMigration(dbInputs.WrkDir)
 	if err != nil {
 		return
 	}
@@ -41,10 +41,10 @@ func PostgresMigration(dbInputs models.DBInputs, initSchema models.InitSchema) (
 	return nil
 }
 
-func initialiseMigration() (err error) {
+func initialiseMigration(wrkDir string) (err error) {
 	cmdSplits := strings.Split(MigrateCreateTemplate, " ")
 
-	_, err = common.ExecuteCmds(cmdSplits[0], cmdSplits[1:])
+	_, err = common.ExecuteCmds(cmdSplits[0], cmdSplits[1:], wrkDir)
 	if err != nil {
 		return
 	}
@@ -56,7 +56,7 @@ func migrationUp(dbInputs models.DBInputs) error {
 	MigrateUp = fmt.Sprintf(MigrateUp, "postgresql", dbInputs.PsqlUser, dbInputs.PsqlPassword, dbInputs.DBName)
 	migrateCmds := strings.Split(MigrateUp, " ")
 
-	_, err := common.ExecuteCmds(migrateCmds[0], migrateCmds[1:])
+	_, err := common.ExecuteCmds(migrateCmds[0], migrateCmds[1:], dbInputs.WrkDir)
 	if err != nil {
 		return err
 	}
