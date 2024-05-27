@@ -3,41 +3,17 @@ package common
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/abhijithk1/api-service-generator/mocks"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
-
-// Mock for ExecuteCmds
-type MockExecutor struct {
-	mock.Mock
-}
-
-func (m *MockExecutor) ExecuteCmds(cmdStr string, cmdArgs []string) ([]byte, error) {
-	args := m.Called(cmdStr, cmdArgs)
-	return args.Get(0).([]byte), args.Error(1)
-}
-
-func (m *MockExecutor) CreateDirectory(path string) error {
-	args := m.Called(path)
-	return args.Error(0)
-}
-
-func (m *MockExecutor) ExecuteGoMod(path, name string) error {
-	args := m.Called(path, name)
-	return args.Error(0)
-}
-
-func (m *MockExecutor) ExecuteGoGets() error {
-	args := m.Called()
-	return args.Error(0)
-}
 
 // captureOutput captures the output of a function that writes to stdout.
 func captureOutput(f func()) string {
@@ -111,7 +87,7 @@ func TestCommandExecuter_CreateDirectory(t *testing.T) {
 
 func TestCreateDirectory(t *testing.T) {
 
-	mockExec := new(MockExecutor)
+	mockExec := mocks.NewMockCmdsExecutor()
 
 	path := "test_dir"
 
@@ -142,7 +118,7 @@ func TestCommandExecuter_ExecuteCmds(t *testing.T) {
 
 func TestExecuteCmds(t *testing.T) {
 
-	mockExec := new(MockExecutor)
+	mockExec := mocks.NewMockCmdsExecutor()
 
 	// Set up test data
     cmdStr := "ls"
@@ -295,34 +271,36 @@ func TestCreateFileAndItsContent_ErrorInExecutingTemplate(t *testing.T) {
 }
 
 func TestExecuteGoMod_Success(t *testing.T) {
-	mockExec := new(MockExecutor)
+	mockExec := mocks.NewMockCmdsExecutor()
+	DefaultExecutor = mockExec
 
 	path := "example/path"
 	name := "example"
-	// modName := fmt.Sprintf("%s/%s", path, name)
+	modName := fmt.Sprintf("%s/%s", path, name)
+	cmdStr := "go"
+	cmdArgs := []string{"mod", "init", modName}
 
-	mockExec.On("ExecuteGoMod", path, name).Return(nil)
+	mockExec.On("ExecuteCmds", cmdStr, cmdArgs).Return([]byte(""),nil)
 
-	executer := mockExec
-
-	err := executer.ExecuteGoMod(path, name)
+	err := ExecuteGoMod(path, name)
 	assert.NoError(t, err)
 	mockExec.AssertExpectations(t)
 
 }
 
 func TestExecuteGoMod_MockError(t *testing.T) {
-	mockExec := new(MockExecutor)
+	mockExec := mocks.NewMockCmdsExecutor()
 	DefaultExecutor = mockExec
 
 	path := "example/path"
 	name := "example"
+	modName := fmt.Sprintf("%s/%s", path, name)
+	cmdStr := "go"
+	cmdArgs := []string{"mod", "init", modName}
 
-	mockExec.On("ExecuteGoMod", path, name).Return(errors.New("error in initialising go module"))
+	mockExec.On("ExecuteCmds", cmdStr, cmdArgs).Return([]byte(""),errors.New("error in initialising go module"))
 
-	executer := mockExec
-
-	err := executer.ExecuteGoMod(path, name)
+	err := ExecuteGoMod(path, name)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "error in initialising go module")
 	mockExec.AssertExpectations(t)
@@ -330,28 +308,34 @@ func TestExecuteGoMod_MockError(t *testing.T) {
 
 
 func TestExecuteGoGets_Success(t *testing.T) {
-	mockExec := new(MockExecutor)
+	mockExec := mocks.NewMockCmdsExecutor()
 	DefaultExecutor = mockExec
 
-	mockExec.On("ExecuteGoGets").Return(nil)
+	DependentPackages = []string{"github.com/some/package", "github.com/another/package"}
+	cmdStr := "go"
+	CmdArgs1 := []string{"get", "github.com/some/package"}
+	CmdArgs2 := []string{"get", "github.com/another/package"}
 
-	executer := mockExec
+	mockExec.On("ExecuteCmds", cmdStr, CmdArgs1).Return([]byte(""),nil)
+	mockExec.On("ExecuteCmds", cmdStr, CmdArgs2).Return([]byte(""),nil)
 
-	err := executer.ExecuteGoGets()
+
+	err := ExecuteGoGets()
 	assert.NoError(t, err)
 	mockExec.AssertExpectations(t)
 }
 
 func TestExecuteGoGets_Error(t *testing.T) {
-	mockExec := new(MockExecutor)
+	mockExec := mocks.NewMockCmdsExecutor()
 	DefaultExecutor = mockExec
 
-	DependentPackages = []string{"github.com/some/package", "github.com/another/package"}
-	mockExec.On("ExecuteGoGets").Return(errors.New("error in downloading go package"))
+	DependentPackages = []string{"github.com/some/package"}
+	cmdStr := "go"
+	CmdArgs := []string{"get", "github.com/some/package"}
 
-	executer := mockExec
+	mockExec.On("ExecuteCmds", cmdStr, CmdArgs).Return([]byte(""),errors.New("error in downloading go package"))
 
-	err := executer.ExecuteGoGets()
+	err := ExecuteGoGets()
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "error in downloading go package")
 	mockExec.AssertExpectations(t)
@@ -359,20 +343,26 @@ func TestExecuteGoGets_Error(t *testing.T) {
 
 func TestInitialise_Success(t *testing.T) {
 	 // Create a mock executor
-	 mockExec := new(MockExecutor)
+	 mockExec := mocks.NewMockCmdsExecutor()
 	 DefaultExecutor = mockExec
  
 	 // Set up test data
 	 path := "example/path"
 	 name := "example"
+	 modName := fmt.Sprintf("%s/%s", path, name) 
 	 initialDirs := []string{"dir1", "dir2"}
 	 InitialDirectories = initialDirs
+	 DependentPackages = []string{"github.com/some/package"}
+
+	 cmdGoStr := "go"
+	 cmdArgs1 := []string{"mod", "init", modName}
+	 cmdArgs2 := []string{"get", "github.com/some/package"}
  
 	 // Set up mock expectations
 	 mockExec.On("CreateDirectory", name).Return(nil)
 	 mockExec.On("ExecuteCmds", "cd", []string{name}).Return([]byte(""), nil)
-	 mockExec.On("ExecuteGoMod", path, name).Return(nil)
-	 mockExec.On("ExecuteGoGets").Return(nil)
+	 mockExec.On("ExecuteCmds", cmdGoStr, cmdArgs1).Return([]byte(""), nil)
+	 mockExec.On("ExecuteCmds", cmdGoStr, cmdArgs2).Return([]byte(""), nil)
 	 for _, dir := range initialDirs {
 		 mockExec.On("CreateDirectory", dir).Return(nil)
 	 }
@@ -399,14 +389,12 @@ func TestInitialise_Success(t *testing.T) {
 
 func TestInitialise_ErrorCreateDirectory(t *testing.T) {
 	// Create a mock executor
-	mockExec := new(MockExecutor)
+	mockExec := mocks.NewMockCmdsExecutor()
 	DefaultExecutor = mockExec
 
 	// Set up test data
 	path := "example/path"
 	name := "example"
-	initialDirs := []string{"dir1", "dir2"}
-	InitialDirectories = initialDirs
 
 	// Set up mock expectations
 	mockExec.On("CreateDirectory", name).Return(errors.New("error in creating file"))
@@ -426,14 +414,12 @@ func TestInitialise_ErrorCreateDirectory(t *testing.T) {
 
 func TestInitialise_ErrorExecutingCmd(t *testing.T) {
 	// Create a mock executor
-	mockExec := new(MockExecutor)
+	mockExec := mocks.NewMockCmdsExecutor()
 	DefaultExecutor = mockExec
 
 	// Set up test data
 	path := "example/path"
 	name := "example"
-	initialDirs := []string{"dir1", "dir2"}
-	InitialDirectories = initialDirs
 
 	// Set up mock expectations
 	mockExec.On("CreateDirectory", name).Return(nil)
@@ -446,19 +432,20 @@ func TestInitialise_ErrorExecutingCmd(t *testing.T) {
 
 func TestInitialise_ErrorExecutingGoMod(t *testing.T) {
 	// Create a mock executor
-	mockExec := new(MockExecutor)
+	mockExec := mocks.NewMockCmdsExecutor()
 	DefaultExecutor = mockExec
 
 	// Set up test data
 	path := "example/path"
 	name := "example"
-	initialDirs := []string{"dir1", "dir2"}
-	InitialDirectories = initialDirs
+	modName := fmt.Sprintf("%s/%s", path, name) 
+	cmdGoStr := "go"
+	cmdArgs1 := []string{"mod", "init", modName}
 
 	// Set up mock expectations
 	mockExec.On("CreateDirectory", name).Return(nil)
 	mockExec.On("ExecuteCmds", "cd", []string{name}).Return([]byte(""), nil)
-	mockExec.On("ExecuteGoMod", path, name).Return(errors.New("error in go mod command"))
+	mockExec.On("ExecuteCmds", cmdGoStr, cmdArgs1).Return([]byte(""), errors.New("error in go mod command"))
 
 	Initialise(path, name)
 
@@ -468,20 +455,23 @@ func TestInitialise_ErrorExecutingGoMod(t *testing.T) {
 
 func TestInitialise_ErrorExecutingGoGets(t *testing.T) {
 	// Create a mock executor
-	mockExec := new(MockExecutor)
+	mockExec := mocks.NewMockCmdsExecutor()
 	DefaultExecutor = mockExec
 
 	// Set up test data
 	path := "example/path"
 	name := "example"
-	initialDirs := []string{"dir1", "dir2"}
-	InitialDirectories = initialDirs
+	modName := fmt.Sprintf("%s/%s", path, name)
+	cmdGoStr := "go"
+	cmdArgs1 := []string{"mod", "init", modName}
+	cmdArgs2 := []string{"get", "github.com/some/package"}
+	DependentPackages = []string{"github.com/some/package"}
 
 	// Set up mock expectations
 	mockExec.On("CreateDirectory", name).Return(nil)
 	mockExec.On("ExecuteCmds", "cd", []string{name}).Return([]byte(""), nil)
-	mockExec.On("ExecuteGoMod", path, name).Return(nil)
-	mockExec.On("ExecuteGoGets").Return(errors.New("error executing go get command"))
+	mockExec.On("ExecuteCmds", cmdGoStr, cmdArgs1).Return([]byte(""),nil)
+	mockExec.On("ExecuteCmds", cmdGoStr, cmdArgs2).Return([]byte(""), errors.New("error executing go get command"))
 
 	Initialise(path, name)
 
@@ -490,20 +480,26 @@ func TestInitialise_ErrorExecutingGoGets(t *testing.T) {
 
 func TestInitialise_ErrorCreatingInitalDirectories(t *testing.T) {
 	// Create a mock executor
-	mockExec := new(MockExecutor)
+	mockExec := mocks.NewMockCmdsExecutor()
 	DefaultExecutor = mockExec
 
 	// Set up test data
 	path := "example/path"
 	name := "example"
+	modName := fmt.Sprintf("%s/%s", path, name) 
 	initialDirs := []string{"dir1"}
 	InitialDirectories = initialDirs
+	DependentPackages = []string{"github.com/some/package"}
+
+	cmdGoStr := "go"
+	cmdArgs1 := []string{"mod", "init", modName}
+	cmdArgs2 := []string{"get", "github.com/some/package"}
 
 	// Set up mock expectations
 	mockExec.On("CreateDirectory", name).Return(nil)
 	mockExec.On("ExecuteCmds", "cd", []string{name}).Return([]byte(""), nil)
-	mockExec.On("ExecuteGoMod", path, name).Return(nil)
-	mockExec.On("ExecuteGoGets").Return(nil)
+	mockExec.On("ExecuteCmds", cmdGoStr, cmdArgs1).Return([]byte(""), nil)
+	mockExec.On("ExecuteCmds", cmdGoStr, cmdArgs2).Return([]byte(""), nil)
 	for _, dir := range InitialDirectories {
 		mockExec.On("CreateDirectory", dir).Return(errors.New("error creating initial directory"))
 	}

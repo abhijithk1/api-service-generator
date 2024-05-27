@@ -16,8 +16,6 @@ var (
 type CommandExecutor interface {
     ExecuteCmds(cmdStr string, cmdArgs []string) ([]byte, error)
 	CreateDirectory(path string) error
-	ExecuteGoMod(path, name string) error
-	ExecuteGoGets() error
 }
 
 // DefaultExecutor is the default implementation of CommandExecutor
@@ -33,7 +31,7 @@ func(r *realCommandExecutor) CreateDirectory(path string) error {
 	return os.Mkdir(path, 0777)
 }
 
-func(r *realCommandExecutor) ExecuteGoMod(path, name string) error {
+func ExecuteGoMod(path, name string) error {
 	modName := fmt.Sprintf("%s/%s", path, name)
 
 	_, err := ExecuteCmds("go", []string{"mod", "init", modName})
@@ -44,7 +42,7 @@ func(r *realCommandExecutor) ExecuteGoMod(path, name string) error {
 	return nil
 }
 
-func (r *realCommandExecutor) ExecuteGoGets() error {
+func ExecuteGoGets() error {
 	for _, pkg := range DependentPackages {
 		_, err := ExecuteCmds("go", []string{"get", pkg})
 		if err != nil {
@@ -133,13 +131,4 @@ func Initialise(path, name string) {
 		}
 	}
 	fmt.Println("*** Successfully Created the initial Directories ***")
-}
-
-
-func ExecuteGoMod(path, name string) error {
-	return DefaultExecutor.ExecuteGoMod(path, name)
-}
-
-func ExecuteGoGets() error {
-	return DefaultExecutor.ExecuteGoGets()
 }
