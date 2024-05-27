@@ -1,67 +1,15 @@
 package common
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
-	"io"
 	"os"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/abhijithk1/api-service-generator/mocks"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
-
-// captureOutput captures the output of a function that writes to stdout.
-func captureOutput(f func()) string {
-    // Create a pipe to redirect output
-    r, w, _ := os.Pipe()
-
-    // Save the current stdout
-    old := os.Stdout
-
-    // Redirect stdout to the write end of the pipe
-    os.Stdout = w
-
-    // Close the write end of the pipe when the function exits
-    defer func() {
-        os.Stdout = old
-        w.Close()
-    }()
-
-    // Create a channel to signal completion of the function
-    done := make(chan bool)
-
-    // Execute the function that generates output in a separate goroutine
-    go func() {
-        defer close(done)
-        f()
-    }()
-
-    // Create a buffer to store the captured output
-    var buf bytes.Buffer
-
-    // Use a timer to prevent indefinite blocking
-    timeout := time.After(5 * time.Second) // Adjust timeout as needed
-    select {
-    case <-done:
-        // Function completed, read from the read end of the pipe to get the captured output
-        io.Copy(&buf, r)
-    case <-timeout:
-        // Timeout occurred, close the read end of the pipe and return an empty string
-        r.Close()
-        return ""
-    }
-
-    // Close the read end of the pipe
-    r.Close()
-
-    // Return the captured output as a string
-    return buf.String()
-}
 
 func TestMain(m *testing.M) {
 	os.Exit(m.Run())
@@ -161,12 +109,12 @@ func TestCreateFileAndItsContent_Success(t *testing.T) {
 	}
 
 	err := CreateFileAndItsContent(fileName, fileData, fileContent)
-	require.NoError(t, err)
-	require.FileExists(t, fileName)
+	assert.NoError(t, err)
+	assert.FileExists(t, fileName)
 
 	content, err := os.ReadFile(fileName)
-	require.NoError(t, err)
-	require.NotEmpty(t, content)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, content)
 
 	// Convert content to a string
 	contentStr := string(content)
@@ -185,13 +133,13 @@ func TestCreateFileAndItsContent_Success(t *testing.T) {
 	}
 	`
 
-	require.Equal(t, normalizeWhitespace(expectedContent), normalizeWhitespace(contentStr))
+	assert.Equal(t, normalizeWhitespace(expectedContent), normalizeWhitespace(contentStr))
 
 	// Clean up: Remove file and its content
 	defer func() {
 		err = os.Remove(fileName)
-		require.NoError(t, err)
-		require.NoFileExists(t, fileName)
+		assert.NoError(t, err)
+		assert.NoFileExists(t, fileName)
 	}()
 }
 
@@ -213,8 +161,8 @@ func TestCreateFileAndItsContent_ErrorInCreatingFile(t *testing.T) {
 
 	// Attempt to create file with invalid path
 	err := CreateFileAndItsContent(fileName, fileData, fileContent)
-	require.Error(t, err)
-	require.Contains(t, err.Error(), "error creating file")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "error creating file")
 }
 
 func TestCreateFileAndItsContent_ErrorInParsingTemplate(t *testing.T) {
@@ -231,14 +179,14 @@ func TestCreateFileAndItsContent_ErrorInParsingTemplate(t *testing.T) {
 
 	// Attempt to create file with invalid template
 	err := CreateFileAndItsContent(fileName, fileData, fileContent)
-	require.Error(t, err)
-	require.Contains(t, err.Error(), "error parsing template")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "error parsing template")
 
 	// Clean up: Remove file if it was created
 	defer func() {
 		err = os.Remove(fileName)
 		if err == nil || os.IsNotExist(err) {
-			require.NoFileExists(t, fileName)
+			assert.NoFileExists(t, fileName)
 		}
 	}()
 }
@@ -258,14 +206,14 @@ func TestCreateFileAndItsContent_ErrorInExecutingTemplate(t *testing.T) {
 
 	// Attempt to create file with mismatched data
 	err := CreateFileAndItsContent(fileName, fileData, fileContent)
-	require.Error(t, err)
-	require.Contains(t, err.Error(), "error executing template")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "error executing template")
 
 	// Clean up: Remove file if it was created
 	defer func() {
 		err = os.Remove(fileName)
 		if err == nil || os.IsNotExist(err) {
-			require.NoFileExists(t, fileName)
+			assert.NoFileExists(t, fileName)
 		}
 	}()
 }

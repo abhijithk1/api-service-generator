@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	InitialDirectories = []string{"api", "pkg"}
+	InitialDirectories = []string{"/api", "/api/v1","/pkg", "/pkg/db", "/pkg/db/migrations", "/pkg/db/query"}
 	DependentPackages = []string{"github.com/gin-gonic/gin", "github.com/IBM/alchemy-logging/src/go/alog", "github.com/spf13/viper"}
 )
 
@@ -28,7 +28,7 @@ func (r *realCommandExecutor) ExecuteCmds(cmdStr string, cmdArgs []string) ([]by
 }
 
 func(r *realCommandExecutor) CreateDirectory(path string) error {
-	return os.Mkdir(path, 0777)
+	return os.MkdirAll(path, 0777)
 }
 
 func ExecuteGoMod(path, name string) error {
