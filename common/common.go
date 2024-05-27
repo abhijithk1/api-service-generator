@@ -16,6 +16,7 @@ var (
 type CommandExecutor interface {
     ExecuteCmds(cmdStr string, cmdArgs []string) ([]byte, error)
 	CreateDirectory(path string) error
+	CreateFileAndItsContent(fileName string, fileData interface{}, content string) error
 }
 
 // DefaultExecutor is the default implementation of CommandExecutor
@@ -63,7 +64,7 @@ func CreateDirectory(path string) error {
 }
 
 // CreateFileAndItsContent creates a file with 0777 permissions and writes content to it using a template
-func CreateFileAndItsContent(fileName string, fileData interface{}, content string) error {
+func (r *realCommandExecutor) CreateFileAndItsContent(fileName string, fileData interface{}, content string) error {
 	
 	// Create a new file with 0777 permissions
 	file, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0777)
@@ -88,6 +89,10 @@ func CreateFileAndItsContent(fileName string, fileData interface{}, content stri
 	fmt.Printf("File %s created successfully\n", fileName)
 
 	return nil
+}
+
+func CreateFileAndItsContent(fileName string, fileData interface{}, content string) error {
+	return DefaultExecutor.CreateFileAndItsContent(fileName, fileData, content)
 }
 
 func Initialise(path, name string) {

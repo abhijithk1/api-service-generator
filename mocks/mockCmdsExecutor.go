@@ -21,10 +21,10 @@ func (m *MockCmdsExecutor) CreateDirectory(path string) error {
 	return args.Error(0)
 }
 
-// func (m *MockExecutor) ExecuteGoMod(path, name string) error {
-// 	args := m.Called(path, name)
-// 	return args.Error(0)
-// }
+func (m *MockCmdsExecutor) CreateFileAndItsContent(fileName string, fileData interface{}, content string) error{
+	args := m.Called(fileName, fileData, content)
+	return args.Error(0)
+}
 
 // func (m *MockExecutor) ExecuteGoGets() error {
 // 	args := m.Called()
