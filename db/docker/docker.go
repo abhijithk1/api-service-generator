@@ -8,10 +8,10 @@ import (
 	"github.com/abhijithk1/api-service-generator/models"
 )
 
-var PostgresRun = `docker run --name postgres_db -p 5432:5432 -e POSTGRES_USER=%s -e POSTGRES_PASSWORD=%s -e POSTGRES_DB=%s -d postgres`
+var PostgresRun = `docker run --name %s -p 5432:5432 -e POSTGRES_USER=%s -e POSTGRES_PASSWORD=%s -e POSTGRES_DB=%s -d postgres`
 
 func RunPostgresContainer(dbInputs models.DBInputs) error {
-	PostgresRun = fmt.Sprintf(PostgresRun, dbInputs.PsqlUser, dbInputs.PsqlPassword, strings.ToLower(dbInputs.DBName))
+	PostgresRun = fmt.Sprintf(PostgresRun, dbInputs.ContainerName, dbInputs.PsqlUser, dbInputs.PsqlPassword, strings.ToLower(dbInputs.DBName))
 	dockerCMds := strings.Split(PostgresRun, " ")
 
 	fmt.Println("Running command: ", PostgresRun)
