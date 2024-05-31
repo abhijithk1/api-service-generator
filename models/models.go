@@ -22,3 +22,15 @@ type InitSchema struct {
 	TableName string
 	WrkDir    string
 }
+
+// Connecting Database
+type DBConnection struct {
+	Driver        string
+	User          string
+	Password      string
+	DBName        string
+}
+
+type Migration struct {
+	PostgresqlUrl string
+}

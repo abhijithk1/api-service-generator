@@ -7,10 +7,7 @@ import (
 
 var queryDirectoryPath = "/pkg/db/query/"
 
-var table_sql = `
-/*
-Generated using API Service Generator
-*/
+var table_sql = `-- Generated using API Service Generator
 
 -- name: List{{.TableName}} :many
 SELECT * FROM {{.TableName}};

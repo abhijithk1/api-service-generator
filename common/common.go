@@ -9,7 +9,7 @@ import (
 
 var (
 	InitialDirectories = []string{"/api", "/api/v1", "/pkg", "/pkg/db", "/pkg/db/migrations", "/pkg/db/query"}
-	DependentPackages  = []string{"github.com/gin-gonic/gin", "github.com/IBM/alchemy-logging/src/go/alog", "github.com/spf13/viper"}
+	DependentPackages  = []string{"github.com/gin-gonic/gin", "github.com/IBM/alchemy-logging/src/go/alog", "github.com/lib/pq", "github.com/golang-migrate/migrate/v4", "github.com/spf13/viper"}
 )
 
 // CommandExecutor defines the interface for executing commands
@@ -99,13 +99,13 @@ func CreateFileAndItsContent(fileName string, fileData interface{}, content stri
 
 func Initialise(path, serviceName string) {
 
-	fmt.Printf("*** Creating the Service Directory %s ***\n", serviceName)
+	fmt.Printf("\n\n*** Creating the Service Directory %s ***\n", serviceName)
 	err := CreateDirectory(serviceName)
 	if err != nil {
 		fmt.Println("Error : ", err)
 		return
 	}
-	fmt.Printf("*** Successfully created the Service Directory %s ***\n", serviceName)
+	fmt.Printf("\n*** Successfully created the Service Directory %s ***\n", serviceName)
 
 	fmt.Println("*** Creating go.mod ***")
 	err = ExecuteGoMod(path, serviceName)
@@ -113,17 +113,17 @@ func Initialise(path, serviceName string) {
 		fmt.Println("Error : ", err)
 		return
 	}
-	fmt.Println("*** Successfully created go.mod ***")
+	fmt.Println("\n*** Successfully created go.mod ***")
 
-	fmt.Println("*** Updating go packages ***")
+	fmt.Println("\n*** Updating go packages ***")
 	err = ExecuteGoGets(serviceName)
 	if err != nil {
 		fmt.Println("Error : ", err)
 		return
 	}
-	fmt.Println("*** Successfully updated go packages ***")
+	fmt.Println("\n*** Successfully updated go packages ***")
 
-	fmt.Println("*** Creating the initial Directories ***")
+	fmt.Println("\n*** Creating the initial Directories ***")
 	for _, dir := range InitialDirectories {
 		dir = serviceName + dir
 		err = CreateDirectory(dir)
@@ -132,5 +132,5 @@ func Initialise(path, serviceName string) {
 			return
 		}
 	}
-	fmt.Println("*** Successfully Created the initial Directories ***")
+	fmt.Println("\n*** Successfully Created the initial Directories ***")
 }
