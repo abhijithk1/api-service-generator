@@ -118,6 +118,7 @@ import (
 	"database/sql"
 
     _ "github.com/lib/pq"
+	"github.com/IBM/alchemy-logging/src/go/alog"
     "github.com/golang-migrate/migrate/v4"
     "github.com/golang-migrate/migrate/v4/database/postgres"
     _ "github.com/golang-migrate/migrate/v4/source/file"

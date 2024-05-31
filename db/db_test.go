@@ -329,7 +329,7 @@ func TestSetup_Postgres(t *testing.T) {
 	}
 	
 	mockDocker.On("RunContainer", dbInputs).Return(errors.New("error in running container"))
-	
+
 	Setup(dbInputs)
 
 	mockDocker.AssertExpectations(t)
@@ -350,9 +350,23 @@ func TestConnectDB(t *testing.T) {
 	wrkDir := "dir"
 
 	fileName := wrkDir + connectionPath + "connection.go"
-	mockExec.On("CreateFileAndItsContent", fileName, dbConnection, Connection).Return(nil)
+	mockExec.On("CreateFileAndItsContent", fileName, dbConnection, connection).Return(nil)
 
 	err := connectDb(wrkDir, dbConnection)
+	assert.NoError(t, err)
+
+	mockExec.AssertExpectations(t)
+}
+
+func TestMainTest(t *testing.T) {
+	mockExec := mocks.NewMockCmdsExecutor()
+	common.DefaultExecutor = mockExec
+	wrkDir := "dir"
+
+	mainTestFileName := wrkDir + connectionPath + "main_test.go"
+	mockExec.On("CreateFileAndItsContent", mainTestFileName, nil, mainTestContent).Return(nil)
+
+	err := mainTest(wrkDir)
 	assert.NoError(t, err)
 
 	mockExec.AssertExpectations(t)
@@ -422,14 +436,102 @@ func TestSetupPostgres_Success(t *testing.T) {
 
 	fileName := dbInputs.WrkDir + connectionPath + "connection.go"
 	
+	mainTestFileName := dbInputs.WrkDir + connectionPath + "main_test.go"
+	
 	mockDocker.On("RunContainer", dbInputs).Return(nil)
 	mockMigration.On("Migration", dbInputs, initSchema).Return(nil)
 	mockQuery.On("SetTableQuery", initSchema).Return(nil)
 	mockCmdsExecutor.On("ExecuteCmds", cmdStr, cmdArgs, dbInputs.WrkDir).Return([]byte(""), nil)
 	mockCmdsExecutor.On("CreateFileAndItsContent", sqlcFileName, nil, string(sqlcYamlMarshal)).Return(nil)
 	mockCmdsExecutor.On("ExecuteCmds", cmdStr1, cmdArgs1, dbInputs.WrkDir).Return([]byte(""), nil)
-	mockCmdsExecutor.On("CreateFileAndItsContent", fileName, connectionDb, Connection).Return(nil)
+	mockCmdsExecutor.On("CreateFileAndItsContent", fileName, connectionDb, connection).Return(nil)
 	mockMigration.On("RunMigration", dbInputs).Return(nil)
+	mockCmdsExecutor.On("CreateFileAndItsContent", mainTestFileName, nil, mainTestContent).Return(nil)
+
+	setupPostgres(dbInputs)
+
+	mockCmdsExecutor.AssertExpectations(t)
+	mockDocker.AssertExpectations(t)
+	mockMigration.AssertExpectations(t)
+	mockQuery.AssertExpectations(t)
+
+}
+
+func TestSetupPostgres_MainTestError(t *testing.T) {
+	//mock cmd executor
+	mockCmdsExecutor := mocks.NewMockCmdsExecutor()
+	common.DefaultExecutor = mockCmdsExecutor
+
+	//mock docker client
+	mockDocker := mocks.NewMockDocker()
+	docker.DefaultDockerClient = mockDocker
+
+	//mock migration client
+	mockMigration := mocks.NewMockMigration()
+	migrations.DefaultMigrationClient = mockMigration
+
+	//mock query client
+	mockQuery := mocks.NewMockQuery()
+	query.DefaultQueryClient = mockQuery
+
+	dbInputs := models.DBInputs{
+		DBMS: "postgres",
+		DBName: "database",
+		WrkDir: "dir",
+		ContainerName: "postgres_db",
+		ContainerPort: 6432,
+		PsqlUser: "user",
+		PsqlPassword: "password",
+		TableName: "table1",
+	}
+
+	initSchema := models.InitSchema{
+		TableName: dbInputs.TableName,
+		WrkDir: dbInputs.WrkDir,
+	}
+
+	cmdStr := "sqlc"
+	cmdArgs := []string{"init"}
+
+	sqlcYaml := models.SQLCYAML{
+		Version: "1",
+		Packages: []models.Packages{
+			{
+				Name:          "db",
+				Path:          "./pkg/db",
+				Schema:        "./pkg/db/migrations",
+				Queries:       "./pkg/db/query/",
+				Engine:        "postgresql",
+				EmitInterface: false,
+			},
+		},
+	}
+	sqlcYamlMarshal, _ := yaml.Marshal(sqlcYaml)
+	sqlcFileName := dbInputs.WrkDir + sqlcFileName
+	cmdStr1 := "sqlc"
+	cmdArgs1 := []string{"generate"}
+	common.MarshalYAML = yaml.Marshal
+
+	connectionDb := models.DBConnection{
+		Driver: dbInputs.DBMS,
+		User: dbInputs.PsqlUser,
+		Password: dbInputs.PsqlPassword,
+		DBName: dbInputs.DBName,
+	}
+
+	fileName := dbInputs.WrkDir + connectionPath + "connection.go"
+	
+	mainTestFileName := dbInputs.WrkDir + connectionPath + "main_test.go"
+	
+	mockDocker.On("RunContainer", dbInputs).Return(nil)
+	mockMigration.On("Migration", dbInputs, initSchema).Return(nil)
+	mockQuery.On("SetTableQuery", initSchema).Return(nil)
+	mockCmdsExecutor.On("ExecuteCmds", cmdStr, cmdArgs, dbInputs.WrkDir).Return([]byte(""), nil)
+	mockCmdsExecutor.On("CreateFileAndItsContent", sqlcFileName, nil, string(sqlcYamlMarshal)).Return(nil)
+	mockCmdsExecutor.On("ExecuteCmds", cmdStr1, cmdArgs1, dbInputs.WrkDir).Return([]byte(""), nil)
+	mockCmdsExecutor.On("CreateFileAndItsContent", fileName, connectionDb, connection).Return(nil)
+	mockMigration.On("RunMigration", dbInputs).Return(nil)
+	mockCmdsExecutor.On("CreateFileAndItsContent", mainTestFileName, nil, mainTestContent).Return(errors.New("error in writing main_test.go"))
 
 	setupPostgres(dbInputs)
 
@@ -510,7 +612,7 @@ func TestSetupPostgres_RunMigrationError(t *testing.T) {
 	mockCmdsExecutor.On("ExecuteCmds", cmdStr, cmdArgs, dbInputs.WrkDir).Return([]byte(""), nil)
 	mockCmdsExecutor.On("CreateFileAndItsContent", sqlcFileName, nil, string(sqlcYamlMarshal)).Return(nil)
 	mockCmdsExecutor.On("ExecuteCmds", cmdStr1, cmdArgs1, dbInputs.WrkDir).Return([]byte(""), nil)
-	mockCmdsExecutor.On("CreateFileAndItsContent", fileName, connectionDb, Connection).Return(nil)
+	mockCmdsExecutor.On("CreateFileAndItsContent", fileName, connectionDb, connection).Return(nil)
 	mockMigration.On("RunMigration", dbInputs).Return(errors.New("error running migration"))
 
 	setupPostgres(dbInputs)
@@ -592,7 +694,7 @@ func TestSetupPostgres_ConnectionDBError(t *testing.T) {
 	mockCmdsExecutor.On("ExecuteCmds", cmdStr, cmdArgs, dbInputs.WrkDir).Return([]byte(""), nil)
 	mockCmdsExecutor.On("CreateFileAndItsContent", sqlcFileName, nil, string(sqlcYamlMarshal)).Return(nil)
 	mockCmdsExecutor.On("ExecuteCmds", cmdStr1, cmdArgs1, dbInputs.WrkDir).Return([]byte(""), nil)
-	mockCmdsExecutor.On("CreateFileAndItsContent", fileName, connectionDb, Connection).Return(errors.New("Error in connecting DB"))
+	mockCmdsExecutor.On("CreateFileAndItsContent", fileName, connectionDb, connection).Return(errors.New("Error in connecting DB"))
 
 	setupPostgres(dbInputs)
 
