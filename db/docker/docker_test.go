@@ -18,13 +18,14 @@ func TestRunDockerContainer_Success(t *testing.T) {
 
 	dbInput := models.DBInputs{
 		ContainerName: "postgres_db",
+		ContainerPort: 6432,
 		PsqlUser:     "root",
 		PsqlPassword: "password",
 		DBName:       "postgres",
 		WrkDir:       "wrkdir",
 	}
 
-	runCmd := fmt.Sprintf(PostgresRun, "postgres_db", "root", "password", "postgres")
+	runCmd := fmt.Sprintf(PostgresRun, "postgres_db", 6432, "root", "password", "postgres")
 
 	cmdSplits := strings.Split(runCmd, " ")
 
@@ -33,7 +34,7 @@ func TestRunDockerContainer_Success(t *testing.T) {
 
 	mockCmdsExecutor.On("ExecuteCmds", cmdStr, cmdArgs, ".").Return([]byte(""), nil)
 
-	err := RunPostgresContainer(dbInput)
+	err := RunContainer(dbInput)
 	assert.NoError(t, err)
 
 	mockCmdsExecutor.AssertExpectations(t)
@@ -45,13 +46,14 @@ func TestRunDockerContainer_Error(t *testing.T) {
 
 	dbInput := models.DBInputs{
 		ContainerName: "postgres_db",
+		ContainerPort: 6432,
 		PsqlUser:     "root",
 		PsqlPassword: "password",
 		DBName:       "postgres",
 		WrkDir:       "wrkdir",
 	}
 
-	runCmd := fmt.Sprintf(PostgresRun, "postgres_db", "root", "password", "postgres")
+	runCmd := fmt.Sprintf(PostgresRun, "postgres_db", 6432, "root", "password", "postgres")
 
 	cmdSplits := strings.Split(runCmd, " ")
 
@@ -60,7 +62,7 @@ func TestRunDockerContainer_Error(t *testing.T) {
 
 	mockCmdsExecutor.On("ExecuteCmds", cmdStr, cmdArgs, ".").Return([]byte(""), errors.New("error in running docker run"))
 
-	err := RunPostgresContainer(dbInput)
+	err := RunContainer(dbInput)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "error in running docker run")
 
@@ -73,13 +75,14 @@ func TestRunDockerContainer_SpecialCaseError(t *testing.T) {
 
 	dbInput := models.DBInputs{
 		ContainerName: "postgres_db",
+		ContainerPort: 6432,
 		PsqlUser:     "root",
 		PsqlPassword: "password",
 		DBName:       "postgres",
 		WrkDir:       "wrkdir",
 	}
 
-	runCmd := fmt.Sprintf(PostgresRun, "postgres_db", "root", "password", "postgres")
+	runCmd := fmt.Sprintf(PostgresRun, "postgres_db", 6432, "root", "password", "postgres")
 
 	cmdSplits := strings.Split(runCmd, " ")
 
@@ -88,7 +91,7 @@ func TestRunDockerContainer_SpecialCaseError(t *testing.T) {
 
 	mockCmdsExecutor.On("ExecuteCmds", cmdStr, cmdArgs, ".").Return([]byte(`The container name "/postgres_db" is already in use by container`), errors.New("error in running docker run"))
 
-	err := RunPostgresContainer(dbInput)
+	err := RunContainer(dbInput)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "error in running docker run")
 

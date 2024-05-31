@@ -25,8 +25,3 @@ func (m *MockCmdsExecutor) CreateFileAndItsContent(fileName string, fileData int
 	args := m.Called(fileName, fileData, content)
 	return args.Error(0)
 }
-
-// func (m *MockExecutor) ExecuteGoGets() error {
-// 	args := m.Called()
-// 	return args.Error(0)
-// }

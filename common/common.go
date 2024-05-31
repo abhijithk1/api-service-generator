@@ -5,11 +5,14 @@ import (
 	"os"
 	"os/exec"
 	"text/template"
+
+	"gopkg.in/yaml.v3"
 )
 
 var (
 	InitialDirectories = []string{"/api", "/api/v1", "/pkg", "/pkg/db", "/pkg/db/migrations", "/pkg/db/query"}
 	DependentPackages  = []string{"github.com/gin-gonic/gin", "github.com/IBM/alchemy-logging/src/go/alog", "github.com/lib/pq", "github.com/golang-migrate/migrate/v4", "github.com/spf13/viper"}
+	MarshalYAML        = yaml.Marshal
 )
 
 // CommandExecutor defines the interface for executing commands

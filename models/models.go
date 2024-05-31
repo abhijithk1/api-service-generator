@@ -4,6 +4,7 @@ package models
 type DBInputs struct {
 	WrkDir        string
 	ContainerName string
+	ContainerPort int
 	DBMS          string
 	DBName        string
 	PsqlUser      string
@@ -31,6 +32,22 @@ type DBConnection struct {
 	DBName        string
 }
 
+//SQLC YAML File
+type SQLCYAML struct {
+	Version  string     `yaml:"version"`
+	Packages []Packages `yaml:"packages"`
+}
+
+type Packages struct {
+	Name          string `yaml:"name"`
+	Path          string `yaml:"path"`
+	Queries       string `yaml:"queries"`
+	Schema        string `yaml:"schema"`
+	Engine        string `yaml:"engine"`
+	EmitInterface bool   `yaml:"emit_interface"`
+}
+
+//Migration Strcut
 type Migration struct {
-	PostgresqlUrl string
+	DatabaseURL string
 }

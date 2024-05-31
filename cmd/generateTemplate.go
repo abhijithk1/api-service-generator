@@ -7,6 +7,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/abhijithk1/api-service-generator/common"
@@ -53,6 +54,14 @@ var generateTemplateCmd = &cobra.Command{
 		if dbInputs.ContainerName == "" {
 			fmt.Println("Container name value is empty, by default using postgres_db")
 			dbInputs.ContainerName = "postgres_db"
+		}
+
+		fmt.Print("Enter the name for the Postgres Docker container port: ")
+		port, _ := reader.ReadString('\n')
+		dbInputs.ContainerPort, _ = strconv.Atoi(strings.TrimSpace(port))
+		if dbInputs.ContainerPort == 0 {
+			fmt.Println("Container port value is empty, by default using 6432")
+			dbInputs.ContainerPort = 6432
 		}
 
 		fmt.Print("Enter the POSTGRES_USER: ")

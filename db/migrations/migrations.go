@@ -11,7 +11,7 @@ import (
 
 var (
 	MigrateCreateTemplate  = `migrate create -ext sql -dir %s/pkg/db/migrations -seq init_schema`
-	PostgresqlUrl          = "postgres://%s:%s@localhost:6432/%s?sslmode=disable"
+	PostgresqlUrl          = "%s://%s:%s@localhost:6432/%s?sslmode=disable"
 	MigrateDown            = `migrate -path %s/pkg/db/migrations -database "%s" -verbose down`
 	migrationDirectoryPath = "/pkg/db/migrations/"
 	migrationUpFileName    = "000001_init_schema.up.sql"
@@ -20,7 +20,16 @@ var (
 	// MigrateUpCmd             = `migrate -path %s/pkg/db/migrations -database "%s" -verbose up`
 )
 
-func PostgresMigration(dbInputs models.DBInputs, initSchema models.InitSchema) (err error) {
+type MigrationInterface interface {
+	Migration(dbInputs models.DBInputs, initSchema models.InitSchema) (err error)
+	RunMigration(dbInputs models.DBInputs) error
+}
+
+var DefaultMigrationClient MigrationInterface = &MigrationClient{}
+
+type MigrationClient struct{}
+
+func (m * MigrationClient) Migration(dbInputs models.DBInputs, initSchema models.InitSchema) (err error) {
 	fmt.Println("\n\n*** Migrating starts....")
 	err = initialiseMigration(dbInputs.WrkDir)
 	if err != nil {
@@ -43,6 +52,16 @@ func PostgresMigration(dbInputs models.DBInputs, initSchema models.InitSchema) (
 	fmt.Println("\n\n*** Up migration  ***")
 
 	return nil
+}
+
+func (m *MigrationClient) RunMigration(dbInputs models.DBInputs) error {
+	sqlUrl := fmt.Sprintf(PostgresqlUrl, dbInputs.DBMS, dbInputs.PsqlUser, dbInputs.PsqlPassword, dbInputs.DBName)
+	fileName := dbInputs.WrkDir + migrationUpFilePath + "migrate.go"
+	return common.CreateFileAndItsContent(fileName, models.Migration{DatabaseURL: sqlUrl}, migrateUp_content)
+}
+
+func Migration(dbInputs models.DBInputs, initSchema models.InitSchema) (err error) {
+	return DefaultMigrationClient.Migration(dbInputs, initSchema)
 }
 
 func initialiseMigration(wrkDir string) (err error) {
@@ -138,7 +157,5 @@ func RunMigration(db *sql.DB, targetRevision int) (err error) {
 `
 
 func RunMigration(dbInputs models.DBInputs) error {
-	PostgresqlUrl = fmt.Sprintf(PostgresqlUrl, dbInputs.PsqlUser, dbInputs.PsqlPassword, dbInputs.DBName)
-	fileName := dbInputs.WrkDir + migrationUpFilePath + "migrate.go"
-	return common.CreateFileAndItsContent(fileName, models.Migration{PostgresqlUrl: PostgresqlUrl}, migrateUp_content)
+	return DefaultMigrationClient.RunMigration(dbInputs)
 }
