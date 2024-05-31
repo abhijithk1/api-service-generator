@@ -46,10 +46,10 @@ func PostgresMigration(dbInputs models.DBInputs, initSchema models.InitSchema) (
 }
 
 func initialiseMigration(wrkDir string) (err error) {
-	MigrateCreateTemplate = fmt.Sprintf(MigrateCreateTemplate, wrkDir)
-	cmdSplits := strings.Split(MigrateCreateTemplate, " ")
+	creatdCmd := fmt.Sprintf(MigrateCreateTemplate, wrkDir)
+	cmdSplits := strings.Split(creatdCmd, " ")
 
-	fmt.Println("\nRunning Command : ", MigrateCreateTemplate)
+	fmt.Println("\nRunning Command : ", creatdCmd)
 
 	output, err := common.ExecuteCmds(cmdSplits[0], cmdSplits[1:], ".")
 	if err != nil {
@@ -81,13 +81,11 @@ DROP TABLE IF EXISTS {{.TableName}};
 
 func writeSchemaUpFile(initSchema models.InitSchema) error {
 	fileName := initSchema.WrkDir + migrationDirectoryPath + migrationUpFileName
-	fmt.Println("filename : ", fileName)
 	return common.CreateFileAndItsContent(fileName, initSchema, init_schema_up)
 }
 
 func writeSchemaDownFile(initSchema models.InitSchema) error {
 	fileName := initSchema.WrkDir + migrationDirectoryPath + migrationDownFileName
-	fmt.Println("filename : ", fileName)
 	return common.CreateFileAndItsContent(fileName, initSchema, init_schema_down)
 }
 
