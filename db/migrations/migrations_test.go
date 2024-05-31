@@ -18,10 +18,7 @@ func TestMain (m *testing.M) {
 	os.Exit(m.Run())
 }
 func TestInitialiseMigration_Success(t *testing.T) {
-	mockCmdsExecutor := mocks.NewMockCmdsExecutor()
-	originalExecutor := common.DefaultExecutor
-    defer func() { common.DefaultExecutor = originalExecutor }()
-	
+	mockCmdsExecutor := mocks.NewMockCmdsExecutor()	
 	common.DefaultExecutor = mockCmdsExecutor
 
 	runCmd := "migrate create -ext sql -dir file/pkg/db/migrations -seq init_schema"
@@ -42,8 +39,6 @@ func TestInitialiseMigration_Success(t *testing.T) {
 
 func TestInitialiseMigration_Error(t *testing.T) {
 	mockCmdsExec := mocks.NewMockCmdsExecutor()
-	originalExecutor := common.DefaultExecutor
-   defer func() { common.DefaultExecutor = originalExecutor }()
 	common.DefaultExecutor = mockCmdsExec
 
 	wrkDir := "newfile"
@@ -66,8 +61,6 @@ func TestInitialiseMigration_Error(t *testing.T) {
 
 func TestRunMigration(t *testing.T) {
 	mockCmdsExecutor := mocks.NewMockCmdsExecutor()
-	originalExecutor := common.DefaultExecutor
-    t.Cleanup(func() { common.DefaultExecutor = originalExecutor })
 	common.DefaultExecutor = mockCmdsExecutor
 
 	dbInputs := models.DBInputs{
@@ -92,8 +85,6 @@ func TestRunMigration(t *testing.T) {
 
 func TestWriteSchemaUpFile(t *testing.T) {
 	mockCmdsExecutor := mocks.NewMockCmdsExecutor()
-	originalExecutor := common.DefaultExecutor
-    t.Cleanup(func() { common.DefaultExecutor = originalExecutor })
 	common.DefaultExecutor = mockCmdsExecutor
 
 	fileName := "/init_schema_up.sql"
@@ -128,8 +119,6 @@ func TestWriteSchemaUpFile(t *testing.T) {
 
 func TestWriteSchemaDownFile(t *testing.T) {
 	mockCmdsExecutor := mocks.NewMockCmdsExecutor()
-	originalExecutor := common.DefaultExecutor
-    t.Cleanup(func() { common.DefaultExecutor = originalExecutor })
 	common.DefaultExecutor = mockCmdsExecutor
 
 	fileName := "/init_schema_down.sql"
@@ -162,8 +151,6 @@ func TestWriteSchemaDownFile(t *testing.T) {
 
 func TestPostgresMigration_Success(t *testing.T) {
 	mockCmdsExecutor := mocks.NewMockCmdsExecutor()
-	originalExecutor := common.DefaultExecutor
-    t.Cleanup(func() { common.DefaultExecutor = originalExecutor })
 	common.DefaultExecutor = mockCmdsExecutor
 
 	runCmd := "migrate create -ext sql -dir wrkdir/pkg/db/migrations -seq init_schema"
@@ -209,8 +196,6 @@ func TestPostgresMigration_Success(t *testing.T) {
 
 func TestPostgresMigration_InitialiseError(t *testing.T) {
 	mockCmdsExecutor := mocks.NewMockCmdsExecutor()
-	originalExecutor := common.DefaultExecutor
-    t.Cleanup(func() { common.DefaultExecutor = originalExecutor })
 	common.DefaultExecutor = mockCmdsExecutor
 
 	runCmd := "migrate create -ext sql -dir wrkdir1/pkg/db/migrations -seq init_schema"
@@ -241,8 +226,6 @@ func TestPostgresMigration_InitialiseError(t *testing.T) {
 
 func TestPostgresMigration_WriteSchemaUpFIleError(t *testing.T) {
 	mockCmdsExecutor := mocks.NewMockCmdsExecutor()
-	originalExecutor := common.DefaultExecutor
-    t.Cleanup(func() { common.DefaultExecutor = originalExecutor })
 	common.DefaultExecutor = mockCmdsExecutor
 
 	runCmd := "migrate create -ext sql -dir wrkdir2/pkg/db/migrations -seq init_schema"
@@ -284,8 +267,6 @@ func TestPostgresMigration_WriteSchemaUpFIleError(t *testing.T) {
 
 func TestPostgresMigration_WriteSchemaDownFileError(t *testing.T) {
 	mockCmdsExecutor := mocks.NewMockCmdsExecutor()
-	originalExecutor := common.DefaultExecutor
-    t.Cleanup(func() { common.DefaultExecutor = originalExecutor })
 	common.DefaultExecutor = mockCmdsExecutor
 
 	runCmd := "migrate create -ext sql -dir wrkdir3/pkg/db/migrations -seq init_schema"
