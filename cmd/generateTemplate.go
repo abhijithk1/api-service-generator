@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/abhijithk1/api-service-generator/api"
 	"github.com/abhijithk1/api-service-generator/common"
 	"github.com/abhijithk1/api-service-generator/db"
 	"github.com/abhijithk1/api-service-generator/models"
@@ -96,6 +97,8 @@ var generateTemplateCmd = &cobra.Command{
 			dbInputs.TableName = "api_table"
 		}
 
+		apiInputs.TableName = dbInputs.TableName
+
 		fmt.Print("Enter a API Group: ")
 		apiInputs.APIGroup, _ = reader.ReadString('\n')
 		apiInputs.APIGroup = strings.TrimSpace(apiInputs.APIGroup)
@@ -106,6 +109,7 @@ var generateTemplateCmd = &cobra.Command{
 
 		common.Initialise("example", dbInputs.WrkDir)
 		db.Setup(dbInputs)
+		api.Setup(apiInputs)
 	},
 }
 

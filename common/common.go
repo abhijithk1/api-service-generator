@@ -4,14 +4,16 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 	"text/template"
+	"unicode"
 
 	"gopkg.in/yaml.v3"
 )
 
 var (
-	InitialDirectories = []string{"/api", "/api/v1", "/pkg", "/pkg/db", "/pkg/db/migrations", "/pkg/db/query"}
-	DependentPackages  = []string{"github.com/gin-gonic/gin", "github.com/IBM/alchemy-logging/src/go/alog", "github.com/lib/pq", "github.com/golang-migrate/migrate/v4", "github.com/spf13/viper"}
+	InitialDirectories = []string{"/api", "/api/v1", "/api/v1/mw", "/pkg", "/pkg/db", "/pkg/db/migrations", "/pkg/db/query", "mocks"}
+	DependentPackages  = []string{"github.com/gin-gonic/gin", "github.com/IBM/alchemy-logging/src/go/alog", "github.com/lib/pq", "github.com/golang-migrate/migrate/v4", "github.com/gin-contrib/cors", "github.com/spf13/viper", "github.com/stretchr/testify/mock"}
 	MarshalYAML        = yaml.Marshal
 )
 
@@ -136,4 +138,23 @@ func Initialise(path, serviceName string) {
 		}
 	}
 	fmt.Println("\n*** Successfully Created the initial Directories ***")
+}
+
+// ToCamelCase converts a snake_case string to CamelCase
+func ToCamelCase(s string) string {
+	parts := strings.Split(s, "_")
+	for i, part := range parts {
+		parts[i] = capitalize(part)
+	}
+	return strings.Join(parts, "")
+}
+
+// capitalize capitalizes the first letter of a string
+func capitalize(s string) string {
+	if s == "" {
+		return ""
+	}
+	runes := []rune(s)
+	runes[0] = unicode.ToUpper(runes[0])
+	return string(runes)
 }

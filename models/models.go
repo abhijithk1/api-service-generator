@@ -14,8 +14,11 @@ type DBInputs struct {
 
 // Inputs from the CLI for API
 type APIInputs struct {
-	WrkDir   string
-	APIGroup string
+	WrkDir         string
+	APIGroup       string
+	APIGroupTitle  string
+	TableName      string
+	TableNameTitle string
 }
 
 // Table details
@@ -26,13 +29,13 @@ type InitSchema struct {
 
 // Connecting Database
 type DBConnection struct {
-	Driver        string
-	User          string
-	Password      string
-	DBName        string
+	Driver   string
+	User     string
+	Password string
+	DBName   string
 }
 
-//SQLC YAML File
+// SQLC YAML File
 type SQLCYAML struct {
 	Version  string     `yaml:"version"`
 	Packages []Packages `yaml:"packages"`
@@ -47,7 +50,17 @@ type Packages struct {
 	EmitInterface bool   `yaml:"emit_interface"`
 }
 
-//Migration Strcut
+// Migration Strcut
 type Migration struct {
 	DatabaseURL string
+}
+
+
+type UnitTestData struct {
+	Package string
+	WrkDir string
+	APIName string
+	TableName string
+	TableObject string
+
 }
