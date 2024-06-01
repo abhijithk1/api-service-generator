@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	InitialDirectories = []string{"/api", "/api/v1", "/api/v1/mw", "/pkg", "/pkg/db", "/pkg/db/migrations", "/pkg/db/query", "mocks"}
+	InitialDirectories = []string{"/api", "/api/v1", "/api/v1/mw", "/api/v1/mw/cors", "/api/v1/mw/auth", "/pkg", "/pkg/db", "/pkg/db/migrations", "/pkg/db/query", "mocks"}
 	DependentPackages  = []string{"github.com/gin-gonic/gin", "github.com/IBM/alchemy-logging/src/go/alog", "github.com/lib/pq", "github.com/golang-migrate/migrate/v4", "github.com/gin-contrib/cors", "github.com/spf13/viper", "github.com/stretchr/testify/mock"}
 	MarshalYAML        = yaml.Marshal
 )
