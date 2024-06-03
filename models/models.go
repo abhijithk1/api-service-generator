@@ -54,6 +54,7 @@ type Packages struct {
 // Migration Strcut
 type Migration struct {
 	DatabaseURL string
+	Driver      string
 }
 
 type UnitTestData struct {

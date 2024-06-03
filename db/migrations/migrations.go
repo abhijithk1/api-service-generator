@@ -11,7 +11,7 @@ import (
 
 var (
 	MigrateCreateTemplate  = `migrate create -ext sql -dir %s/pkg/db/migrations -seq init_schema`
-	PostgresqlUrl          = "%s://%s:%s@localhost:6432/%s?sslmode=disable"
+	PostgresqlUrl          = "%s://%s:%s@localhost:%d/%s?sslmode=disable"
 	MigrateDown            = `migrate -path %s/pkg/db/migrations -database "%s" -verbose down`
 	migrationDirectoryPath = "/pkg/db/migrations/"
 	migrationUpFileName    = "000001_init_schema.up.sql"
@@ -55,9 +55,9 @@ func (m * MigrationClient) Migration(dbInputs models.DBInputs, initSchema models
 }
 
 func (m *MigrationClient) RunMigration(dbInputs models.DBInputs) error {
-	sqlUrl := fmt.Sprintf(PostgresqlUrl, dbInputs.DBMS, dbInputs.PsqlUser, dbInputs.PsqlPassword, dbInputs.DBName)
+	sqlUrl := fmt.Sprintf(PostgresqlUrl, dbInputs.DBMS, dbInputs.PsqlUser, dbInputs.PsqlPassword, dbInputs.ContainerPort, dbInputs.DBName)
 	fileName := dbInputs.WrkDir + migrationUpFilePath + "migrate.go"
-	return common.CreateFileAndItsContent(fileName, models.Migration{DatabaseURL: sqlUrl}, migrateUp_content)
+	return common.CreateFileAndItsContent(fileName, models.Migration{DatabaseURL: sqlUrl, Driver: dbInputs.DBMS}, migrateUp_content)
 }
 
 func Migration(dbInputs models.DBInputs, initSchema models.InitSchema) (err error) {
@@ -128,8 +128,8 @@ func RunMigration(db *sql.DB, targetRevision int) (err error) {
 		return
 	}
 	m, err := migrate.NewWithDatabaseInstance(
-		"postgres://postgres:password@localhost:6432/postgres?sslmode=disable",
-		"postgres", driver)
+		"{{.DatabaseURL}}",
+		"{{.Driver}}", driver)
 	if err != nil {
 		return
 	}
