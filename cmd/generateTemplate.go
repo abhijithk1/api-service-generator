@@ -14,6 +14,7 @@ import (
 	"github.com/abhijithk1/api-service-generator/common"
 	"github.com/abhijithk1/api-service-generator/db"
 	"github.com/abhijithk1/api-service-generator/models"
+	"github.com/abhijithk1/api-service-generator/util"
 	"github.com/spf13/cobra"
 )
 
@@ -41,7 +42,7 @@ var generateTemplateCmd = &cobra.Command{
 		// Prompt the user for additional input
 		reader := bufio.NewReader(os.Stdin)
 
-		fmt.Print("DBMS (currently supports only Postgres): ")
+		fmt.Print("\nDBMS (currently supports only Postgres): ")
 		dbInputs.DBMS, _ = reader.ReadString('\n')
 		dbInputs.DBMS = strings.ToLower(strings.TrimSpace(dbInputs.DBMS))
 		if dbInputs.DBMS == "" {
@@ -49,7 +50,7 @@ var generateTemplateCmd = &cobra.Command{
 			dbInputs.DBMS = "postgres"
 		}
 
-		fmt.Print("Enter the name for the Postgres Docker container: ")
+		fmt.Print("\nEnter the name for the Postgres Docker container: ")
 		dbInputs.ContainerName, _ = reader.ReadString('\n')
 		dbInputs.ContainerName = strings.ToLower(strings.TrimSpace(dbInputs.ContainerName))
 		if dbInputs.ContainerName == "" {
@@ -57,7 +58,7 @@ var generateTemplateCmd = &cobra.Command{
 			dbInputs.ContainerName = "postgres_db"
 		}
 
-		fmt.Print("Enter the name for the Postgres Docker container port: ")
+		fmt.Print("\nEnter the name for the Postgres Docker container port: ")
 		port, _ := reader.ReadString('\n')
 		dbInputs.ContainerPort, _ = strconv.Atoi(strings.TrimSpace(port))
 		if dbInputs.ContainerPort == 0 {
@@ -65,7 +66,7 @@ var generateTemplateCmd = &cobra.Command{
 			dbInputs.ContainerPort = 6432
 		}
 
-		fmt.Print("Enter the POSTGRES_USER: ")
+		fmt.Print("\nEnter the POSTGRES_USER: ")
 		dbInputs.PsqlUser, _ = reader.ReadString('\n')
 		dbInputs.PsqlUser = strings.ToLower(strings.TrimSpace(dbInputs.PsqlUser))
 		if dbInputs.PsqlUser == "" {
@@ -73,7 +74,7 @@ var generateTemplateCmd = &cobra.Command{
 			dbInputs.PsqlUser = "postgres"
 		}
 
-		fmt.Print("Enter the POSTGRES_PASSWORD: ")
+		fmt.Print("\nEnter the POSTGRES_PASSWORD: ")
 		dbInputs.PsqlPassword, _ = reader.ReadString('\n')
 		dbInputs.PsqlPassword = strings.ToLower(strings.TrimSpace(dbInputs.PsqlPassword))
 		if dbInputs.PsqlPassword == "" {
@@ -81,7 +82,7 @@ var generateTemplateCmd = &cobra.Command{
 			dbInputs.PsqlPassword = "password"
 		}
 
-		fmt.Print("Enter the Name of the Database: ")
+		fmt.Print("\nEnter the Name of the Database: ")
 		dbInputs.DBName, _ = reader.ReadString('\n')
 		dbInputs.DBName = strings.ToLower(strings.TrimSpace(dbInputs.DBName))
 		if dbInputs.DBName == "" {
@@ -89,7 +90,7 @@ var generateTemplateCmd = &cobra.Command{
 			dbInputs.DBName = dbInputs.PsqlUser
 		}
 
-		fmt.Print("Enter a Table Name: ")
+		fmt.Print("\nEnter a Table Name: ")
 		dbInputs.TableName, _ = reader.ReadString('\n')
 		dbInputs.TableName = strings.TrimSpace(dbInputs.TableName)
 		if dbInputs.TableName == "" {
@@ -99,7 +100,7 @@ var generateTemplateCmd = &cobra.Command{
 
 		apiInputs.TableName = dbInputs.TableName
 
-		fmt.Print("Enter a API Group: ")
+		fmt.Print("\nEnter a API Group: ")
 		apiInputs.APIGroup, _ = reader.ReadString('\n')
 		apiInputs.APIGroup = strings.TrimSpace(apiInputs.APIGroup)
 		if apiInputs.APIGroup == "" {
@@ -107,9 +108,18 @@ var generateTemplateCmd = &cobra.Command{
 			apiInputs.APIGroup = "dummy"
 		}
 
-		common.Initialise("example", dbInputs.WrkDir)
+		fmt.Print("\nEnter a Go Module Base Path: ")
+		apiInputs.APIGroup, _ = reader.ReadString('\n')
+		apiInputs.APIGroup = strings.TrimSpace(apiInputs.APIGroup)
+		if apiInputs.APIGroup == "" {
+			fmt.Println("GO MOdule base path is empty, by default using the name 'example'")
+			apiInputs.GoModule = "example"
+		}
+
+		common.Initialise(apiInputs.GoModule, dbInputs.WrkDir)
 		db.Setup(dbInputs)
 		api.Setup(apiInputs)
+		util.SetUtils(apiInputs.WrkDir)
 	},
 }
 

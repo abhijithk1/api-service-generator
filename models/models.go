@@ -15,6 +15,7 @@ type DBInputs struct {
 // Inputs from the CLI for API
 type APIInputs struct {
 	WrkDir         string
+	GoModule       string
 	APIGroup       string
 	APIGroupTitle  string
 	TableName      string
@@ -55,12 +56,10 @@ type Migration struct {
 	DatabaseURL string
 }
 
-
 type UnitTestData struct {
-	Package string
-	WrkDir string
-	APIName string
-	TableName string
+	Package     string
+	WrkDir      string
+	APIName     string
+	TableName   string
 	TableObject string
-
 }

@@ -60,6 +60,7 @@ import (
 
 	"github.com/IBM/alchemy-logging/src/go/alog"
 	"github.com/gin-gonic/gin"
+	"{{.GoModule}}/{{.WrkDir}}/utils"
 )
 
 const (
@@ -72,12 +73,13 @@ func AuthMiddleware() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 
 		token := ctx.GetHeader(AuthorizationKey)
-
+		// check authorization key
+		useAuth := util.GetAppConfig().AUTH
 		if len(token) < 30 {
-			// if useAuth == "false" {
-			// 	ch.Log(alog.ERROR, "Authorization False")
-			// 	return
-			// }
+			if useAuth == "false" {
+				ch.Log(alog.ERROR, "Authorization False")
+				return
+			}
 			err := errors.New("No authorization key provided")
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, ErrorResponse(err))
 			return

@@ -84,7 +84,7 @@ package {{.APIGroup}}
 
 import (
 	"context"
-	"example/{{.WrkDir}}/pkg/db"
+	"{{.GoModule}}/{{.WrkDir}}/pkg/db"
 )
 
 type Service interface {
