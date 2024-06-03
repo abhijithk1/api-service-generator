@@ -60,7 +60,7 @@ func setupRouter({{.APIGroup}}Svc {{.APIGroup}}.Service) *gin.Engine {
 	v1 := router.Group("/v1")
 	v1.Use(auth.AuthMiddleware())
 
-	{{.APIGroup}}.ResourceHandler(v1, {{.APIGroup}}Svc)
+	{{.APIGroup}}.RegisterHandler(v1, {{.APIGroup}}Svc)
 
 	router.NoRoute(func(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"code": "404_NOT_FOUND", "message": "No URL found"})
