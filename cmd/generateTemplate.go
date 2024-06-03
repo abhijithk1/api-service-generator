@@ -44,6 +44,7 @@ func runGenerateTemplate(cmd *cobra.Command, args []string) {
 		fmt.Println("\nUsage: api-service-generator generateTemplate --name <name>")
 		return
 	}
+	apiInputs.WrkDir = dbInputs.WrkDir
 
 	reader := bufio.NewReader(os.Stdin)
 	dbInputs.DBMS = promptForInput(reader, "DBMS (currently supports only Postgres): ", "postgres", common.IsValidString)

@@ -77,7 +77,7 @@ func main() {
 
 	err := db.RunMigration(conn, DB_REVISION)
 	if err != nil {
-		ch.Log(alog.ERROR, "Failed to migrate: ` + "%v" +`, err)
+		ch.Log(alog.ERROR, "Failed to migrate: %v", err)
 		return
 	}
 
