@@ -109,10 +109,10 @@ var generateTemplateCmd = &cobra.Command{
 		}
 
 		fmt.Print("\nEnter a Go Module Base Path: ")
-		apiInputs.APIGroup, _ = reader.ReadString('\n')
-		apiInputs.APIGroup = strings.TrimSpace(apiInputs.APIGroup)
-		if apiInputs.APIGroup == "" {
-			fmt.Println("GO MOdule base path is empty, by default using the name 'example'")
+		apiInputs.GoModule, _ = reader.ReadString('\n')
+		apiInputs.GoModule = strings.TrimSpace(apiInputs.GoModule)
+		if apiInputs.GoModule == "" {
+			fmt.Println("GO Module base path is empty, by default using the name 'example'")
 			apiInputs.GoModule = "example"
 		}
 
