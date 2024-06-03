@@ -102,10 +102,10 @@ func CreateFileAndItsContent(fileName string, fileData interface{}, content stri
 	return DefaultExecutor.CreateFileAndItsContent(fileName, fileData, content)
 }
 
-func Initialise(path, serviceName string) {
+func Initialise(path, serviceName string) (err error){
 
 	fmt.Printf("\n\n*** Creating the Service Directory %s ***\n", serviceName)
-	err := CreateDirectory(serviceName)
+	err = CreateDirectory(serviceName)
 	if err != nil {
 		fmt.Println("Error : ", err)
 		return
@@ -138,6 +138,8 @@ func Initialise(path, serviceName string) {
 		}
 	}
 	fmt.Println("\n*** Successfully Created the initial Directories ***")
+
+	return nil
 }
 
 // ToCamelCase converts a snake_case string to CamelCase

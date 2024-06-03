@@ -11,7 +11,10 @@ import (
 	"strings"
 
 	"github.com/abhijithk1/api-service-generator/api"
+	"github.com/abhijithk1/api-service-generator/api/mw"
+	"github.com/abhijithk1/api-service-generator/cleanup"
 	"github.com/abhijithk1/api-service-generator/common"
+	finalsetup "github.com/abhijithk1/api-service-generator/common/finalSetup"
 	"github.com/abhijithk1/api-service-generator/db"
 	"github.com/abhijithk1/api-service-generator/models"
 	"github.com/abhijithk1/api-service-generator/util"
@@ -116,10 +119,45 @@ var generateTemplateCmd = &cobra.Command{
 			apiInputs.GoModule = "example"
 		}
 
-		common.Initialise(apiInputs.GoModule, dbInputs.WrkDir)
-		db.Setup(dbInputs)
-		api.Setup(apiInputs)
-		util.SetUtils(apiInputs.WrkDir)
+		err := common.Initialise(apiInputs.GoModule, dbInputs.WrkDir)
+		if err != nil {
+			fmt.Println("\n Clean Up the generated files")
+			cleanup.CleanUp(dbInputs.WrkDir, "")
+			return
+		}
+		err = db.Setup(dbInputs)
+		if err != nil {
+			fmt.Println("\n Clean Up the generated files and container")
+			cleanup.CleanUp(dbInputs.WrkDir, dbInputs.ContainerName)
+			return
+		}
+		err = api.Setup(apiInputs)
+		if err != nil {
+			fmt.Println("\n Clean Up the generated files and container")
+			cleanup.CleanUp(dbInputs.WrkDir, dbInputs.ContainerName)
+			return
+		}
+		err = mw.SetupMiddleWare(apiInputs)
+		if err != nil {
+			fmt.Println("\n Clean Up the generated files and container")
+			cleanup.CleanUp(dbInputs.WrkDir, dbInputs.ContainerName)
+			return
+		}
+		err = util.SetUtils(apiInputs.WrkDir)
+		if err != nil {
+			fmt.Println("\n Clean Up the generated files and container")
+			cleanup.CleanUp(dbInputs.WrkDir, dbInputs.ContainerName)
+			return
+		}
+		err = finalsetup.FinalSetup(apiInputs, dbInputs)
+		if err != nil {
+			fmt.Println("\n Clean Up the generated files and container")
+			cleanup.CleanUp(dbInputs.WrkDir, dbInputs.ContainerName)
+			return
+		}
+
+		fmt.Println("\n\n Successfully generated API service Template...")
+		fmt.Println("\n\n Happy Coding...")
 	},
 }
 

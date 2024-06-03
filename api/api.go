@@ -11,11 +11,11 @@ var (
 	APIFilePath = "%s/api/v1/%s/"
 )
 
-func Setup(apiInputs models.APIInputs) {
+func Setup(apiInputs models.APIInputs) (err error) {
 	apiInputs.APIGroupTitle = common.ToCamelCase(apiInputs.APIGroup)
 	apiInputs.TableNameTitle = common.ToCamelCase(apiInputs.TableName)
 
-	err := createApiGroup(apiInputs)
+	err = createApiGroup(apiInputs)
 	if err != nil {
 		fmt.Println("Error: ", err)
 		return
@@ -32,6 +32,8 @@ func Setup(apiInputs models.APIInputs) {
 		fmt.Println("Error: ", err)
 		return
 	}
+
+	return nil
 }
 
 func createApiGroup(apiInputs models.APIInputs) error {
@@ -53,7 +55,7 @@ type {{.APIGroupTitle}}Resource struct {
 }
 
 
-func ResourceHandler(r *gin.RouterGroup, service Service) {
+func RegisterHandler(r *gin.RouterGroup, service Service) {
 	resource := New{{.APIGroupTitle}}Resource(service)
 	
 	r.GET("/{{.APIGroup}}", resource.Get{{.APIGroupTitle}})
