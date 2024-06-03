@@ -2,12 +2,17 @@ package cleanup
 
 import (
 	"errors"
+	"os"
 	"testing"
 
 	"github.com/abhijithk1/api-service-generator/common"
 	"github.com/abhijithk1/api-service-generator/mocks"
 	"github.com/stretchr/testify/assert"
 )
+
+func TestMain (m *testing.M) {
+	os.Exit(m.Run())
+}
 
 func TestRemoveDirectory_Success(t *testing.T) {
 	mockCmdsExecutor := mocks.NewMockCmdsExecutor()

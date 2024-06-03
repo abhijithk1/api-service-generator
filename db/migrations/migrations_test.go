@@ -71,11 +71,11 @@ func TestRunMigration(t *testing.T) {
 		WrkDir: "file",
 	}
 
-	psqlUrl := fmt.Sprintf(PostgresqlUrl, dbInputs.DBMS, dbInputs.PsqlUser, dbInputs.PsqlPassword, dbInputs.DBName)
+	psqlUrl := fmt.Sprintf(PostgresqlUrl, dbInputs.DBMS, dbInputs.PsqlUser, dbInputs.PsqlPassword, dbInputs.ContainerPort ,dbInputs.DBName)
 
 	fileName := dbInputs.WrkDir + migrationUpFilePath + "migrate.go"
 
-	mockCmdsExecutor.On("CreateFileAndItsContent", fileName, models.Migration{DatabaseURL: psqlUrl}, migrateUp_content).Return(nil)
+	mockCmdsExecutor.On("CreateFileAndItsContent", fileName, models.Migration{DatabaseURL: psqlUrl, Driver: dbInputs.DBMS}, migrateUp_content).Return(nil)
 	err := RunMigration(dbInputs)
 
 	require.NoError(t, err)

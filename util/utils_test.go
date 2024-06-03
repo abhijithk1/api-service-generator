@@ -3,6 +3,7 @@ package util
 import (
 	"errors"
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/abhijithk1/api-service-generator/common"
@@ -10,6 +11,9 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestMain (m *testing.M) {
+	os.Exit(m.Run())
+}
 func TestCreateConfigFile(t *testing.T) {
 	mockCmdsExecutor := mocks.NewMockCmdsExecutor()
 	common.DefaultExecutor = mockCmdsExecutor

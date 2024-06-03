@@ -87,6 +87,7 @@ func main() {
 
 func createMainFile(apiInputs models.APIInputs) error {
 	fileName := apiInputs.WrkDir + "/main.go"
+	apiInputs.APIGroupTitle = common.ToCamelCase(apiInputs.APIGroup)
 	return common.CreateFileAndItsContent(fileName, apiInputs, mainContent)
 }
 

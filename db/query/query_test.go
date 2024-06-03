@@ -2,6 +2,7 @@ package query
 
 import (
 	"errors"
+	"os"
 	"testing"
 
 	"github.com/abhijithk1/api-service-generator/common"
@@ -10,6 +11,9 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestMain (m *testing.M) {
+	os.Exit(m.Run())
+}
 func TestSetTableQuery(t *testing.T) {
 	mockCmdsExecutor := mocks.NewMockCmdsExecutor()
 	common.DefaultExecutor = mockCmdsExecutor

@@ -3,6 +3,7 @@ package mw
 import (
 	"errors"
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/abhijithk1/api-service-generator/common"
@@ -10,6 +11,10 @@ import (
 	"github.com/abhijithk1/api-service-generator/models"
 	"github.com/stretchr/testify/assert"
 )
+
+func TestMain (m *testing.M) {
+	os.Exit(m.Run())
+}
 
 func TestCreateCorsMiddleware(t *testing.T) {
 	mockCmdsExecutor := mocks.NewMockCmdsExecutor()

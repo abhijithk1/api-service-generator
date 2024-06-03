@@ -3,6 +3,7 @@ package docker
 import (
 	"errors"
 	"fmt"
+	"os"
 	"strings"
 	"testing"
 
@@ -11,6 +12,10 @@ import (
 	"github.com/abhijithk1/api-service-generator/models"
 	"github.com/stretchr/testify/assert"
 )
+
+func TestMain (m *testing.M) {
+	os.Exit(m.Run())
+}
 
 func TestRunDockerContainer_Success(t *testing.T) {
 	mockCmdsExecutor := mocks.NewMockCmdsExecutor()
