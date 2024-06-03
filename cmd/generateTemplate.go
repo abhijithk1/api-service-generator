@@ -164,14 +164,4 @@ var generateTemplateCmd = &cobra.Command{
 func init() {
 	generateTemplateCmd.Flags().StringP("name", "n", "", "Name of the API Service that needs to be generated.")
 	rootCmd.AddCommand(generateTemplateCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// generateTemplateCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// generateTemplateCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
