@@ -26,142 +26,87 @@ var generateTemplateCmd = &cobra.Command{
 	Use:   "generateTemplate",
 	Short: "Generate Template",
 	Long:  `Command that generates the API service template`,
-
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("generateTemplate called.......")
-		dbInputs := models.DBInputs{}
-		apiInputs := models.APIInputs{}
-
-		dbInputs.WrkDir, _ = cmd.Flags().GetString("name")
-		if dbInputs.WrkDir == "" {
-			fmt.Println("Name should be provided")
-			fmt.Println("\nUsage: api-service-generator generateTemplate --name <name>")
-			return
-		}
-
-		apiInputs.WrkDir = dbInputs.WrkDir
-		fmt.Printf("Name is : %s\n", dbInputs.WrkDir)
-
-		// Prompt the user for additional input
-		reader := bufio.NewReader(os.Stdin)
-
-		fmt.Print("\nDBMS (currently supports only Postgres): ")
-		dbInputs.DBMS, _ = reader.ReadString('\n')
-		dbInputs.DBMS = strings.ToLower(strings.TrimSpace(dbInputs.DBMS))
-		if dbInputs.DBMS == "" {
-			fmt.Println("DBMS value is empty, by default using Postgres")
-			dbInputs.DBMS = "postgres"
-		}
-
-		fmt.Print("\nEnter the name for the Postgres Docker container: ")
-		dbInputs.ContainerName, _ = reader.ReadString('\n')
-		dbInputs.ContainerName = strings.ToLower(strings.TrimSpace(dbInputs.ContainerName))
-		if dbInputs.ContainerName == "" {
-			fmt.Println("Container name value is empty, by default using postgres_db")
-			dbInputs.ContainerName = "postgres_db"
-		}
-
-		fmt.Print("\nEnter the name for the Postgres Docker container port: ")
-		port, _ := reader.ReadString('\n')
-		dbInputs.ContainerPort, _ = strconv.Atoi(strings.TrimSpace(port))
-		if dbInputs.ContainerPort == 0 {
-			fmt.Println("Container port value is empty, by default using 6432")
-			dbInputs.ContainerPort = 6432
-		}
-
-		fmt.Print("\nEnter the POSTGRES_USER: ")
-		dbInputs.PsqlUser, _ = reader.ReadString('\n')
-		dbInputs.PsqlUser = strings.ToLower(strings.TrimSpace(dbInputs.PsqlUser))
-		if dbInputs.PsqlUser == "" {
-			fmt.Println("Database value is empty, by default using the value as 'postgres'")
-			dbInputs.PsqlUser = "postgres"
-		}
-
-		fmt.Print("\nEnter the POSTGRES_PASSWORD: ")
-		dbInputs.PsqlPassword, _ = reader.ReadString('\n')
-		dbInputs.PsqlPassword = strings.ToLower(strings.TrimSpace(dbInputs.PsqlPassword))
-		if dbInputs.PsqlPassword == "" {
-			fmt.Println("Database value is empty, by default using value as 'password'")
-			dbInputs.PsqlPassword = "password"
-		}
-
-		fmt.Print("\nEnter the Name of the Database: ")
-		dbInputs.DBName, _ = reader.ReadString('\n')
-		dbInputs.DBName = strings.ToLower(strings.TrimSpace(dbInputs.DBName))
-		if dbInputs.DBName == "" {
-			fmt.Println("Database value is empty, by default using the value of POSTGRES_USER")
-			dbInputs.DBName = dbInputs.PsqlUser
-		}
-
-		fmt.Print("\nEnter a Table Name: ")
-		dbInputs.TableName, _ = reader.ReadString('\n')
-		dbInputs.TableName = strings.TrimSpace(dbInputs.TableName)
-		if dbInputs.TableName == "" {
-			fmt.Println("Table name is empty, by default using the name 'api_table'")
-			dbInputs.TableName = "api_table"
-		}
-
-		apiInputs.TableName = dbInputs.TableName
-
-		fmt.Print("\nEnter a API Group: ")
-		apiInputs.APIGroup, _ = reader.ReadString('\n')
-		apiInputs.APIGroup = strings.TrimSpace(apiInputs.APIGroup)
-		if apiInputs.APIGroup == "" {
-			fmt.Println("API Group is empty, by default using the name 'dummy'")
-			apiInputs.APIGroup = "dummy"
-		}
-
-		fmt.Print("\nEnter a Go Module Base Path: ")
-		apiInputs.GoModule, _ = reader.ReadString('\n')
-		apiInputs.GoModule = strings.TrimSpace(apiInputs.GoModule)
-		if apiInputs.GoModule == "" {
-			fmt.Println("GO Module base path is empty, by default using the name 'example'")
-			apiInputs.GoModule = "example"
-		}
-
-		err := common.Initialise(apiInputs.GoModule, dbInputs.WrkDir)
-		if err != nil {
-			fmt.Println("\n Clean Up the generated files")
-			cleanup.CleanUp(dbInputs.WrkDir, "")
-			return
-		}
-		err = db.Setup(dbInputs)
-		if err != nil {
-			fmt.Println("\n Clean Up the generated files and container")
-			cleanup.CleanUp(dbInputs.WrkDir, dbInputs.ContainerName)
-			return
-		}
-		err = api.Setup(apiInputs)
-		if err != nil {
-			fmt.Println("\n Clean Up the generated files and container")
-			cleanup.CleanUp(dbInputs.WrkDir, dbInputs.ContainerName)
-			return
-		}
-		err = mw.SetupMiddleWare(apiInputs)
-		if err != nil {
-			fmt.Println("\n Clean Up the generated files and container")
-			cleanup.CleanUp(dbInputs.WrkDir, dbInputs.ContainerName)
-			return
-		}
-		err = util.SetUtils(apiInputs.WrkDir)
-		if err != nil {
-			fmt.Println("\n Clean Up the generated files and container")
-			cleanup.CleanUp(dbInputs.WrkDir, dbInputs.ContainerName)
-			return
-		}
-		err = finalsetup.FinalSetup(apiInputs, dbInputs)
-		if err != nil {
-			fmt.Println("\n Clean Up the generated files and container")
-			cleanup.CleanUp(dbInputs.WrkDir, dbInputs.ContainerName)
-			return
-		}
-
-		fmt.Println("\n\n Successfully generated API service Template...")
-		fmt.Println("\n\n Happy Coding...")
-	},
+	Run: runGenerateTemplate,
 }
 
 func init() {
 	generateTemplateCmd.Flags().StringP("name", "n", "", "Name of the API Service that needs to be generated.")
 	rootCmd.AddCommand(generateTemplateCmd)
+}
+
+func runGenerateTemplate(cmd *cobra.Command, args []string) {
+	dbInputs := models.DBInputs{}
+	apiInputs := models.APIInputs{}
+
+	dbInputs.WrkDir, _ = cmd.Flags().GetString("name")
+	if dbInputs.WrkDir == "" {
+		fmt.Println("Name should be provided")
+		fmt.Println("\nUsage: api-service-generator generateTemplate --name <name>")
+		return
+	}
+
+	reader := bufio.NewReader(os.Stdin)
+	dbInputs.DBMS = promptForInput(reader, "DBMS (currently supports only Postgres): ", "postgres", common.IsValidString)
+	dbInputs.ContainerName = promptForInput(reader, "Enter the name for the Postgres Docker container: ", "postgres_db", common.IsValidString)
+	dbInputs.ContainerPort = promptForInt(reader, "Enter the name for the Postgres Docker container port: ", 6432)
+	dbInputs.PsqlUser = promptForInput(reader, "Enter the POSTGRES_USER: ", "postgres", common.IsValidString)
+	dbInputs.PsqlPassword = promptForInput(reader, "Enter the POSTGRES_PASSWORD: ", "password", common.IsValidString)
+	dbInputs.DBName = promptForInput(reader, "Enter the Name of the Database: ", dbInputs.PsqlUser, common.IsValidString)
+	dbInputs.TableName = promptForInput(reader, "Enter a Table Name: ", "api_table", common.IsValidString)
+	apiInputs.TableName = dbInputs.TableName
+	apiInputs.APIGroup = promptForInput(reader, "Enter an API Group: ", "dummy", common.IsValidString)
+	apiInputs.GoModule = promptForInput(reader, "Enter a Go Module Base Path: ", "example", func(s string) bool {return true})
+	dbInputs.GoModule = apiInputs.GoModule
+
+	steps := []func() error{
+		func() error { return common.Initialise(apiInputs.GoModule, dbInputs.WrkDir) },
+		func() error { return db.Setup(dbInputs) },
+		func() error { return api.Setup(apiInputs) },
+		func() error { return mw.SetupMiddleWare(apiInputs) },
+		func() error { return util.SetUtils(apiInputs.WrkDir) },
+		func() error { return finalsetup.FinalSetup(apiInputs, dbInputs) },
+	}
+
+	for _, step := range steps {
+		if err := step(); err != nil {
+			fmt.Printf("Error: Setup step failed: %v", err)
+			cleanup.CleanUp(dbInputs.WrkDir, dbInputs.ContainerName)
+			return
+		}
+	}
+
+	fmt.Println("\n\n Successfully generated API service Template...")
+	fmt.Println("\n\n Happy Coding...")
+}
+
+func promptForInput(reader *bufio.Reader, prompt, defaultValue string, validationFunc func(string) bool) string {
+	for {
+		fmt.Print("\n" + prompt)
+		input, _ := reader.ReadString('\n')
+		input = strings.ToLower(strings.TrimSpace(input))
+		if input == "" {
+			fmt.Printf("%s value is empty, by default using %s\n", prompt, defaultValue)
+			return defaultValue
+		}
+		if validationFunc(input) {
+			return input
+		}
+		fmt.Printf("Invalid input! %s contains invalid characters. Please try again.\n", prompt)
+	}
+}
+
+func promptForInt(reader *bufio.Reader, prompt string, defaultValue int) int {
+	fmt.Print("\n" + prompt)
+	input, _ := reader.ReadString('\n')
+	input = strings.TrimSpace(input)
+	if input == "" {
+		fmt.Printf("%s value is empty, by default using %d\n", prompt, defaultValue)
+		return defaultValue
+	}
+	value, err := strconv.Atoi(input)
+	if err != nil {
+		fmt.Printf("%s value is invalid, by default using %d\n", prompt, defaultValue)
+		return defaultValue
+	}
+	return value
 }

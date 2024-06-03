@@ -3,6 +3,7 @@ package models
 // Inputs from the CLI for DB
 type DBInputs struct {
 	WrkDir        string
+	GoModule      string
 	ContainerName string
 	ContainerPort int
 	DBMS          string
@@ -30,10 +31,8 @@ type InitSchema struct {
 
 // Connecting Database
 type DBConnection struct {
-	Driver   string
-	User     string
-	Password string
-	DBName   string
+	GoModule string
+	WrkDir   string
 }
 
 // SQLC YAML File
@@ -49,12 +48,6 @@ type Packages struct {
 	Schema        string `yaml:"schema"`
 	Engine        string `yaml:"engine"`
 	EmitInterface bool   `yaml:"emit_interface"`
-}
-
-// Migration Strcut
-type Migration struct {
-	DatabaseURL string
-	Driver      string
 }
 
 type UnitTestData struct {

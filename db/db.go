@@ -136,14 +136,11 @@ func setupPostgres(dbInputs models.DBInputs) (err error) {
 
 	fmt.Println("\n\n*** Successfully setup SQLC ***")
 
-	connectionDb := models.DBConnection{
-		Driver:   dbInputs.DBMS,
-		User:     dbInputs.PsqlUser,
-		Password: dbInputs.PsqlPassword,
-		DBName:   dbInputs.DBName,
+	dbConnection := models.DBConnection {
+		WrkDir: dbInputs.WrkDir,
+		GoModule: dbInputs.GoModule,
 	}
-
-	err = connectDb(dbInputs.WrkDir, connectionDb)
+	err = connectDb(dbConnection)
 	if err != nil {
 		fmt.Println("Error : ", err)
 		return
@@ -172,6 +169,7 @@ package db
 
 import (
 	"database/sql"
+	util "{{.GoModule}}/{{.WrkDir}}/utils"
 
 	"github.com/IBM/alchemy-logging/src/go/alog"
 	_ "github.com/lib/pq"
@@ -181,7 +179,9 @@ var ch = alog.UseChannel("MAIN")
 
 func GetConnection() *sql.DB {
 
-	conn, err := sql.Open("postgres", "{{.Driver}}://{{.User}}:{{.Password}}@localhost:6432/{{.DBName}}?sslmode=disable")
+	driver := util.GetAppConfig().DBDriver
+	source := util.GetAppConfig().DBSource
+	conn, err := sql.Open(driver, source)
 	if err != nil {
 		panic("unable to open database connection")
 	}
@@ -194,8 +194,8 @@ func GetConnection() *sql.DB {
 }
 `
 
-func connectDb(wrkDir string, dbConnection models.DBConnection) error {
-	fileName := wrkDir + connectionPath + "connection.go"
+func connectDb(dbConnection models.DBConnection) error {
+	fileName := dbConnection.WrkDir + connectionPath + "connection.go"
 	return common.CreateFileAndItsContent(fileName, dbConnection, connection)
 
 }

@@ -460,3 +460,19 @@ func TestCapitalise(t *testing.T) {
 	newStr2 := capitalize(str2)
 	assert.Equal(t, "", newStr2)
 }
+
+func TestIsValidString(t *testing.T) {
+	str := "new-str"
+
+	expectedResult := false
+	 result := IsValidString(str)
+
+	 assert.Equal(t, expectedResult, result)
+
+	 str = "new_str"
+	 expectedResult = true
+
+	 result = IsValidString(str)
+
+	 assert.Equal(t, expectedResult, result)
+}

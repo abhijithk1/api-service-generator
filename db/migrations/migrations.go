@@ -11,8 +11,6 @@ import (
 
 var (
 	MigrateCreateTemplate  = `migrate create -ext sql -dir %s/pkg/db/migrations -seq init_schema`
-	PostgresqlUrl          = "%s://%s:%s@localhost:%d/%s?sslmode=disable"
-	MigrateDown            = `migrate -path %s/pkg/db/migrations -database "%s" -verbose down`
 	migrationDirectoryPath = "/pkg/db/migrations/"
 	migrationUpFileName    = "000001_init_schema.up.sql"
 	migrationDownFileName  = "000001_init_schema.down.sql"
@@ -55,9 +53,8 @@ func (m * MigrationClient) Migration(dbInputs models.DBInputs, initSchema models
 }
 
 func (m *MigrationClient) RunMigration(dbInputs models.DBInputs) error {
-	sqlUrl := fmt.Sprintf(PostgresqlUrl, dbInputs.DBMS, dbInputs.PsqlUser, dbInputs.PsqlPassword, dbInputs.ContainerPort, dbInputs.DBName)
 	fileName := dbInputs.WrkDir + migrationUpFilePath + "migrate.go"
-	return common.CreateFileAndItsContent(fileName, models.Migration{DatabaseURL: sqlUrl, Driver: dbInputs.DBMS}, migrateUp_content)
+	return common.CreateFileAndItsContent(fileName, dbInputs, migrateUp_content)
 }
 
 func Migration(dbInputs models.DBInputs, initSchema models.InitSchema) (err error) {
@@ -114,6 +111,7 @@ package db
 
 import (
 	"database/sql"
+	util "{{.GoModule}}/{{.WrkDir}}/utils"
 
     _ "github.com/lib/pq"
 	"github.com/IBM/alchemy-logging/src/go/alog"
@@ -123,13 +121,14 @@ import (
 )
 
 func RunMigration(db *sql.DB, targetRevision int) (err error) {
+	dbDriver := util.GetAppConfig().DBDriver
 	driver, err := postgres.WithInstance(db, &postgres.Config{})
 	if err != nil {
 		return
 	}
 	m, err := migrate.NewWithDatabaseInstance(
-		"{{.DatabaseURL}}",
-		"{{.Driver}}", driver)
+		"file://pkg/db/migrations",
+		dbDriver, driver)
 	if err != nil {
 		return
 	}

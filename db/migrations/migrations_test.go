@@ -2,7 +2,6 @@ package migrations
 
 import (
 	"errors"
-	"fmt"
 	"os"
 	"strings"
 	"testing"
@@ -65,17 +64,16 @@ func TestRunMigration(t *testing.T) {
 
 	dbInputs := models.DBInputs{
 		DBMS: "postgres",
+		GoModule: "example",
 		PsqlUser: "root",
 		PsqlPassword: "password",
 		DBName: "database",
 		WrkDir: "file",
 	}
 
-	psqlUrl := fmt.Sprintf(PostgresqlUrl, dbInputs.DBMS, dbInputs.PsqlUser, dbInputs.PsqlPassword, dbInputs.ContainerPort ,dbInputs.DBName)
-
 	fileName := dbInputs.WrkDir + migrationUpFilePath + "migrate.go"
 
-	mockCmdsExecutor.On("CreateFileAndItsContent", fileName, models.Migration{DatabaseURL: psqlUrl, Driver: dbInputs.DBMS}, migrateUp_content).Return(nil)
+	mockCmdsExecutor.On("CreateFileAndItsContent", fileName, dbInputs, migrateUp_content).Return(nil)
 	err := RunMigration(dbInputs)
 
 	require.NoError(t, err)

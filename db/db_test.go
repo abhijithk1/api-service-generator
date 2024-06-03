@@ -341,18 +341,14 @@ func TestConnectDB(t *testing.T) {
 	common.DefaultExecutor = mockExec
 
 	dbConnection := models.DBConnection{
-		User: "user",
-		Password: "password",
-		Driver: "postgres",
-		DBName: "database",
+		GoModule: "example",
+		WrkDir: "dir",
 	}
 
-	wrkDir := "dir"
-
-	fileName := wrkDir + connectionPath + "connection.go"
+	fileName := dbConnection.WrkDir + connectionPath + "connection.go"
 	mockExec.On("CreateFileAndItsContent", fileName, dbConnection, connection).Return(nil)
 
-	err := connectDb(wrkDir, dbConnection)
+	err := connectDb(dbConnection)
 	assert.NoError(t, err)
 
 	mockExec.AssertExpectations(t)
@@ -398,6 +394,7 @@ func TestSetupPostgres_Success(t *testing.T) {
 		PsqlUser: "user",
 		PsqlPassword: "password",
 		TableName: "table1",
+		GoModule: "example",
 	}
 
 	initSchema := models.InitSchema{
@@ -427,11 +424,9 @@ func TestSetupPostgres_Success(t *testing.T) {
 	cmdArgs1 := []string{"generate"}
 	common.MarshalYAML = yaml.Marshal
 
-	connectionDb := models.DBConnection{
-		Driver: dbInputs.DBMS,
-		User: dbInputs.PsqlUser,
-		Password: dbInputs.PsqlPassword,
-		DBName: dbInputs.DBName,
+	dbConnection := models.DBConnection{
+		GoModule: "example",
+		WrkDir: "dir",
 	}
 
 	fileName := dbInputs.WrkDir + connectionPath + "connection.go"
@@ -444,7 +439,7 @@ func TestSetupPostgres_Success(t *testing.T) {
 	mockCmdsExecutor.On("ExecuteCmds", cmdStr, cmdArgs, dbInputs.WrkDir).Return([]byte(""), nil)
 	mockCmdsExecutor.On("CreateFileAndItsContent", sqlcFileName, nil, string(sqlcYamlMarshal)).Return(nil)
 	mockCmdsExecutor.On("ExecuteCmds", cmdStr1, cmdArgs1, dbInputs.WrkDir).Return([]byte(""), nil)
-	mockCmdsExecutor.On("CreateFileAndItsContent", fileName, connectionDb, connection).Return(nil)
+	mockCmdsExecutor.On("CreateFileAndItsContent", fileName, dbConnection, connection).Return(nil)
 	mockMigration.On("RunMigration", dbInputs).Return(nil)
 	mockCmdsExecutor.On("CreateFileAndItsContent", mainTestFileName, nil, mainTestContent).Return(nil)
 
@@ -483,6 +478,7 @@ func TestSetupPostgres_MainTestError(t *testing.T) {
 		PsqlUser: "user",
 		PsqlPassword: "password",
 		TableName: "table1",
+		GoModule: "example",
 	}
 
 	initSchema := models.InitSchema{
@@ -511,12 +507,9 @@ func TestSetupPostgres_MainTestError(t *testing.T) {
 	cmdStr1 := "sqlc"
 	cmdArgs1 := []string{"generate"}
 	common.MarshalYAML = yaml.Marshal
-
-	connectionDb := models.DBConnection{
-		Driver: dbInputs.DBMS,
-		User: dbInputs.PsqlUser,
-		Password: dbInputs.PsqlPassword,
-		DBName: dbInputs.DBName,
+	dbConnection := models.DBConnection{
+		GoModule: "example",
+		WrkDir: "dir",
 	}
 
 	fileName := dbInputs.WrkDir + connectionPath + "connection.go"
@@ -529,7 +522,7 @@ func TestSetupPostgres_MainTestError(t *testing.T) {
 	mockCmdsExecutor.On("ExecuteCmds", cmdStr, cmdArgs, dbInputs.WrkDir).Return([]byte(""), nil)
 	mockCmdsExecutor.On("CreateFileAndItsContent", sqlcFileName, nil, string(sqlcYamlMarshal)).Return(nil)
 	mockCmdsExecutor.On("ExecuteCmds", cmdStr1, cmdArgs1, dbInputs.WrkDir).Return([]byte(""), nil)
-	mockCmdsExecutor.On("CreateFileAndItsContent", fileName, connectionDb, connection).Return(nil)
+	mockCmdsExecutor.On("CreateFileAndItsContent", fileName, dbConnection, connection).Return(nil)
 	mockMigration.On("RunMigration", dbInputs).Return(nil)
 	mockCmdsExecutor.On("CreateFileAndItsContent", mainTestFileName, nil, mainTestContent).Return(errors.New("error in writing main_test.go"))
 
@@ -568,6 +561,7 @@ func TestSetupPostgres_RunMigrationError(t *testing.T) {
 		PsqlUser: "user",
 		PsqlPassword: "password",
 		TableName: "table1",
+		GoModule: "example",
 	}
 
 	initSchema := models.InitSchema{
@@ -596,12 +590,9 @@ func TestSetupPostgres_RunMigrationError(t *testing.T) {
 	cmdStr1 := "sqlc"
 	cmdArgs1 := []string{"generate"}
 	common.MarshalYAML = yaml.Marshal
-
-	connectionDb := models.DBConnection{
-		Driver: dbInputs.DBMS,
-		User: dbInputs.PsqlUser,
-		Password: dbInputs.PsqlPassword,
-		DBName: dbInputs.DBName,
+	dbConnection := models.DBConnection{
+		GoModule: "example",
+		WrkDir: "dir",
 	}
 
 	fileName := dbInputs.WrkDir + connectionPath + "connection.go"
@@ -612,7 +603,7 @@ func TestSetupPostgres_RunMigrationError(t *testing.T) {
 	mockCmdsExecutor.On("ExecuteCmds", cmdStr, cmdArgs, dbInputs.WrkDir).Return([]byte(""), nil)
 	mockCmdsExecutor.On("CreateFileAndItsContent", sqlcFileName, nil, string(sqlcYamlMarshal)).Return(nil)
 	mockCmdsExecutor.On("ExecuteCmds", cmdStr1, cmdArgs1, dbInputs.WrkDir).Return([]byte(""), nil)
-	mockCmdsExecutor.On("CreateFileAndItsContent", fileName, connectionDb, connection).Return(nil)
+	mockCmdsExecutor.On("CreateFileAndItsContent", fileName, dbConnection, connection).Return(nil)
 	mockMigration.On("RunMigration", dbInputs).Return(errors.New("error running migration"))
 
 	setupPostgres(dbInputs)
@@ -650,6 +641,7 @@ func TestSetupPostgres_ConnectionDBError(t *testing.T) {
 		PsqlUser: "user",
 		PsqlPassword: "password",
 		TableName: "table1",
+		GoModule: "example",
 	}
 
 	initSchema := models.InitSchema{
@@ -678,12 +670,9 @@ func TestSetupPostgres_ConnectionDBError(t *testing.T) {
 	cmdStr1 := "sqlc"
 	cmdArgs1 := []string{"generate"}
 	common.MarshalYAML = yaml.Marshal
-
-	connectionDb := models.DBConnection{
-		Driver: dbInputs.DBMS,
-		User: dbInputs.PsqlUser,
-		Password: dbInputs.PsqlPassword,
-		DBName: dbInputs.DBName,
+	dbConnection := models.DBConnection{
+		GoModule: "example",
+		WrkDir: "dir",
 	}
 
 	fileName := dbInputs.WrkDir + connectionPath + "connection.go"
@@ -694,7 +683,7 @@ func TestSetupPostgres_ConnectionDBError(t *testing.T) {
 	mockCmdsExecutor.On("ExecuteCmds", cmdStr, cmdArgs, dbInputs.WrkDir).Return([]byte(""), nil)
 	mockCmdsExecutor.On("CreateFileAndItsContent", sqlcFileName, nil, string(sqlcYamlMarshal)).Return(nil)
 	mockCmdsExecutor.On("ExecuteCmds", cmdStr1, cmdArgs1, dbInputs.WrkDir).Return([]byte(""), nil)
-	mockCmdsExecutor.On("CreateFileAndItsContent", fileName, connectionDb, connection).Return(errors.New("Error in connecting DB"))
+	mockCmdsExecutor.On("CreateFileAndItsContent", fileName, dbConnection, connection).Return(errors.New("Error in connecting DB"))
 
 	setupPostgres(dbInputs)
 

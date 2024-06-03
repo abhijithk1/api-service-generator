@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"regexp"
 	"strings"
 	"text/template"
 	"unicode"
@@ -159,4 +160,15 @@ func capitalize(s string) string {
 	runes := []rune(s)
 	runes[0] = unicode.ToUpper(runes[0])
 	return string(runes)
+}
+
+func IsValidString(s string) bool {
+	// Define the regular expression pattern to match only alphanumeric characters and underscores.
+	var validStringPattern = `^[a-zA-Z0-9_]*$`
+
+	// Compile the regular expression.
+	re := regexp.MustCompile(validStringPattern)
+
+	// Check if the string matches the pattern.
+	return re.MatchString(s)
 }
