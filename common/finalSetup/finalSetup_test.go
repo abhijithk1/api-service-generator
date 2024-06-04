@@ -92,11 +92,45 @@ func TestFinalSetup_Success(t *testing.T) {
 	mainFilename := apiInputs.WrkDir + "/main.go"
 	makeFilename := apiInputs.WrkDir + "/Makefile"
 	envFilename := dbInputs.WrkDir + "/app.env"
-
-
+	httpFileName := apiInputs.WrkDir + "/api.http"
+	
 	mockCmdsExecutor.On("CreateFileAndItsContent", mainFilename, apiInputs, mainContent).Return(nil)
 	mockCmdsExecutor.On("CreateFileAndItsContent", envFilename, dbInputs, envFile).Return(nil)
 	mockCmdsExecutor.On("CreateFileAndItsContent", makeFilename, nil, makeFileContent).Return(nil)
+	mockCmdsExecutor.On("CreateFileAndItsContent", httpFileName, apiInputs, api_HTTP).Return(nil)
+
+	FinalSetup(apiInputs, dbInputs)
+
+	mockCmdsExecutor.AssertExpectations(t)
+}
+
+func TestFinalSetup_APIHTTPFileError(t *testing.T) {
+	mockCmdsExecutor := mocks.NewMockCmdsExecutor()
+	common.DefaultExecutor = mockCmdsExecutor
+
+	apiInputs := models.APIInputs{
+		WrkDir: "dir",
+		APIGroup: "dummy",
+		APIGroupTitle: "Dummy",
+		GoModule: "example",
+	}
+	dbInputs := models.DBInputs{
+		PsqlUser: "user",
+		PsqlPassword: "password",
+		ContainerPort: 6432,
+		DBMS: "postgres",
+		DBName: "data_db",
+		WrkDir: "dir",
+	}
+	mainFilename := apiInputs.WrkDir + "/main.go"
+	makeFilename := apiInputs.WrkDir + "/Makefile"
+	envFilename := dbInputs.WrkDir + "/app.env"
+	httpFileName := apiInputs.WrkDir + "/api.http"
+	
+	mockCmdsExecutor.On("CreateFileAndItsContent", mainFilename, apiInputs, mainContent).Return(nil)
+	mockCmdsExecutor.On("CreateFileAndItsContent", envFilename, dbInputs, envFile).Return(nil)
+	mockCmdsExecutor.On("CreateFileAndItsContent", makeFilename, nil, makeFileContent).Return(nil)
+	mockCmdsExecutor.On("CreateFileAndItsContent", httpFileName, apiInputs, api_HTTP).Return(errors.New("error in creating api.http"))
 
 	FinalSetup(apiInputs, dbInputs)
 
@@ -184,4 +218,26 @@ func TestFinalSetup_MainFileError(t *testing.T) {
 	FinalSetup(apiInputs, dbInputs)
 
 	mockCmdsExecutor.AssertExpectations(t)
+}
+
+func TestCreateAPIHTTPFile(t *testing.T) {
+	mockCmdsExecutor := mocks.NewMockCmdsExecutor()
+	common.DefaultExecutor = mockCmdsExecutor
+
+	apiInputs := models.APIInputs{
+		WrkDir: "dir",
+		APIGroup: "dummy",
+		APIGroupTitle: "Dummy",
+		GoModule: "example",
+	}
+
+	fileName := apiInputs.WrkDir + "/api.http"
+	mockCmdsExecutor.On("CreateFileAndItsContent", fileName, apiInputs, api_HTTP).Return(nil)
+
+	err := createAPIHTTPFile(apiInputs)
+
+	assert.NoError(t, err)
+
+	mockCmdsExecutor.AssertExpectations(t)
+
 }

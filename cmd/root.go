@@ -9,8 +9,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// var log = alog.UseChannel("generator")
-
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "api-service-generator",
@@ -20,9 +18,6 @@ var rootCmd = &cobra.Command{
 			SQLC for Database connection to PostgresQL
 
 		This application generates a boiler template of an API service, where the user can build their own custom API service on top of it.`,
-	// Uncomment the following line if your bare application
-	// has an action associated with it:
-	// Run: func(cmd *cobra.Command, args []string) { },
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
