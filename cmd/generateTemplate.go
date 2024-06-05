@@ -47,7 +47,7 @@ func runGenerateTemplate(cmd *cobra.Command, args []string) {
 	apiInputs.WrkDir = dbInputs.WrkDir
 
 	reader := bufio.NewReader(os.Stdin)
-	dbInputs.DBMS = promptForInput(reader, "DBMS (currently supports only Postgres): ", "postgres", common.IsValidString)
+	dbInputs.DBMS = promptForInput(reader, "Enter the Database Driver (currently supports only Postgres): ", "postgres", common.IsValidString)
 	dbInputs.ContainerName = promptForInput(reader, "Enter the name for the Postgres Docker container: ", "postgres_db", common.IsValidString)
 	dbInputs.ContainerPort = promptForInt(reader, "Enter the name for the Postgres Docker container port: ", 6432)
 	dbInputs.PsqlUser = promptForInput(reader, "Enter the POSTGRES_USER: ", "postgres", common.IsValidString)
