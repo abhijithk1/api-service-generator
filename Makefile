@@ -13,6 +13,6 @@ install:
 	go install
 
 build:
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o main main.go
+	go build -o api-service-generator
 
 .PHONY: api-service-generator, clean, test, install, build
