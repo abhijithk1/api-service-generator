@@ -3,7 +3,7 @@
 `api-service-generator` is a CLI tool built with the Cobra CLI package that allows developers to quickly generate a basic Golang REST API service. The generated service uses the following packages:
 
 - [Gin Framework](https://github.com/gin-gonic/gin) for building the API.
-- [alog](https://github.com/IBM/alchemy-logging) for logging.
+- [IBM/alchemy-logging](https://github.com/IBM/alchemy-logging) for logging.
 - [golang-migrate](https://github.com/golang-migrate/migrate) for database migrations.
 - [sqlc](https://github.com/sqlc-dev/sqlc) for generating type-safe Go code from SQL queries.
 - [Viper](https://github.com/spf13/viper) for configuration management.
@@ -119,7 +119,7 @@ To run the generated API service:
     make run
     ```
 
-The server will start on port 8080.
+The server will start on port 8080. The migration is done automatically. If needed, you can migrate it manually using the Makefile commands.
 
 ### Makefile
 
