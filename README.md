@@ -55,6 +55,8 @@ The CLI will prompt you to enter the following details:
 8. **API Group**: API group for the generated service
 9. **Module Path**: Base path for the Go module
 
+The CLI will automatically spin up a PostgreSQL Docker container based on the provided inputs and configure the API service to connect to it.
+
 ## Project Structure
 
 The generated project has the following structure:
