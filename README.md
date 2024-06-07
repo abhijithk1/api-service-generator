@@ -22,7 +22,7 @@ Ensure the following commands are installed and available in your system's PATH:
 Clone the repository and build the CLI application:
 
 ```sh
-git clone https://github.com/yourusername/api-service-generator.git
+git clone https://github.com/abhijithk1/api-service-generator.git
 cd api-service-generator
 go build -o api-service-generator
 ```
