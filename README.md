@@ -46,14 +46,14 @@ api-service-generator template --name myservice
 The CLI will prompt you to enter the following details:
 
 1. **Database Driver**: (Currently supports only `postgres`)
-2. **Container Name**: Name for the PostgreSQL Docker container (Default: `postgres_db`)
-3. **Container Port**: Port for the PostgreSQL Docker container (Default: `6432`)
-4. **PostgreSQL User**: PostgreSQL user (Default: `postgres`)
-5. **PostgreSQL Password**: PostgreSQL password (Default: `password`)
-6. **Database Name**: Name of the PostgreSQL database (Default: `value of POSTGRES_USER`)
-7. **Table Name**: Name of the database table (Default: `api_table`)
-8. **API Group**: API group for the generated service (Default: `dummy`)
-9. **Module Path**: Base path for the Go module (Default: `example`)
+2. **Container Name**: Name for the PostgreSQL Docker container _(Default: `postgres_db`)_
+3. **Container Port**: Port for the PostgreSQL Docker container _(Default: `6432`)_
+4. **PostgreSQL User**: PostgreSQL user _(Default: `postgres`)_
+5. **PostgreSQL Password**: PostgreSQL password _(Default: `password`)_
+6. **Database Name**: Name of the PostgreSQL database_ (Default: `value of POSTGRES_USER`)_
+7. **Table Name**: Name of the database table _(Default: `api_table`)_
+8. **API Group**: API group for the generated service _(Default: `dummy`)_
+9. **Module Path**: Base path for the Go module _(Default: `example`)_
 
 The CLI will automatically spin up a PostgreSQL Docker container based on the provided inputs and configure the API service to connect to it.
 
