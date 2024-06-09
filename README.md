@@ -33,12 +33,14 @@ Move the `api-service-generator` binary to a directory in your PATH.
 mv api-service-generator /usr/local/bin/
 ```
 
+> Note: Can Skip the build and moving the binary process. Instead run: `go install`
+
 ## Usage
 
 The `template` subcommand is used to create a basic Golang REST API service. The CLI takes a single `--name` flag and then prompts for the other inputs:
 
 ```sh
-api-service-generator template --name myservice
+api-service-generator go-template --name myservice
 ```
 
 ### Prompts
