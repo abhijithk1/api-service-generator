@@ -23,7 +23,7 @@ import (
 
 // generateTemplateCmd represents the generateTemplate command
 var generateTemplateCmd = &cobra.Command{
-	Use:   "template",
+	Use:   "go-template",
 	Short: "Generate Template",
 	Long:  `Command that generates the API service template`,
 	Run: runGenerateTemplate,
