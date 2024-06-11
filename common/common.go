@@ -9,12 +9,13 @@ import (
 	"text/template"
 	"unicode"
 
+	"github.com/abhijithk1/api-service-generator/models"
 	"gopkg.in/yaml.v3"
 )
 
 var (
 	InitialDirectories = []string{"/api", "/api/v1", "/api/v1/mw", "/api/v1/mw/cors", "/api/v1/mw/auth", "/pkg", "/pkg/db", "/pkg/db/migrations", "/pkg/db/query", "/utils"}
-	DependentPackages  = []string{"github.com/gin-gonic/gin", "github.com/IBM/alchemy-logging/src/go/alog", "github.com/lib/pq", "github.com/golang-migrate/migrate/v4", "github.com/gin-contrib/cors", "github.com/spf13/viper", "github.com/stretchr/testify/mock"}
+	DependentPackages  = []string{"github.com/gin-gonic/gin", "github.com/IBM/alchemy-logging/src/go/alog", "github.com/golang-migrate/migrate/v4", "github.com/gin-contrib/cors", "github.com/spf13/viper", "github.com/stretchr/testify/mock"}
 	MarshalYAML        = yaml.Marshal
 )
 
@@ -103,26 +104,27 @@ func CreateFileAndItsContent(fileName string, fileData interface{}, content stri
 	return DefaultExecutor.CreateFileAndItsContent(fileName, fileData, content)
 }
 
-func Initialise(path, serviceName string) (err error){
+func Initialise(path string, dbInputs *models.DBInputs) (err error){
 
-	fmt.Printf("\n\n*** Creating the Service Directory %s ***\n", serviceName)
-	err = CreateDirectory(serviceName)
+	fmt.Printf("\n\n*** Creating the Service Directory %s ***\n", dbInputs.WrkDir)
+	err = CreateDirectory(dbInputs.WrkDir)
 	if err != nil {
 		fmt.Println("Error : ", err)
 		return
 	}
-	fmt.Printf("\n*** Successfully created the Service Directory %s ***\n", serviceName)
+	fmt.Printf("\n*** Successfully created the Service Directory %s ***\n", dbInputs.WrkDir)
 
 	fmt.Println("*** Creating go.mod ***")
-	err = ExecuteGoMod(path, serviceName)
+	err = ExecuteGoMod(path, dbInputs.WrkDir)
 	if err != nil {
 		fmt.Println("Error : ", err)
 		return
 	}
 	fmt.Println("\n*** Successfully created go.mod ***")
 
+	appendDriverPackage(dbInputs)
 	fmt.Println("\n*** Updating go packages ***")
-	err = ExecuteGoGets(serviceName)
+	err = ExecuteGoGets(dbInputs.WrkDir)
 	if err != nil {
 		fmt.Println("Error : ", err)
 		return
@@ -131,7 +133,7 @@ func Initialise(path, serviceName string) (err error){
 
 	fmt.Println("\n*** Creating the initial Directories ***")
 	for _, dir := range InitialDirectories {
-		dir = serviceName + dir
+		dir = dbInputs.WrkDir + dir
 		err = CreateDirectory(dir)
 		if err != nil {
 			fmt.Println("Error : ", err)
@@ -171,4 +173,15 @@ func IsValidString(s string) bool {
 
 	// Check if the string matches the pattern.
 	return re.MatchString(s)
+}
+
+func appendDriverPackage(dbInputs *models.DBInputs) {
+	switch dbInputs.DBMS {
+	case "postgres":
+		DependentPackages = append(DependentPackages, "github.com/lib/pq")
+		dbInputs.DriverPackage = "github.com/lib/pq"
+	case "mysql":
+		DependentPackages = append(DependentPackages, "github.com/go-sql-driver/mysql")
+		dbInputs.DriverPackage = "github.com/go-sql-driver/mysql"
+	}
 }

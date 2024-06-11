@@ -8,9 +8,23 @@ type DBInputs struct {
 	ContainerPort int
 	DBMS          string
 	DBName        string
-	PsqlUser      string
-	PsqlPassword  string
+	DriverPackage string
+	Postgres      PostgresDriver
+	MySQL         MySQLDriver
 	TableName     string
+}
+
+// Postgres
+type PostgresDriver struct {
+	PsqlUser     string
+	PsqlPassword string
+}
+
+//MySQL
+type MySQLDriver struct {
+	MysqlRootPassword string
+	MysqlUser         string
+	MysqlPassword     string
 }
 
 // Inputs from the CLI for API
@@ -29,11 +43,6 @@ type InitSchema struct {
 	WrkDir    string
 }
 
-// Connecting Database
-type DBConnection struct {
-	GoModule string
-	WrkDir   string
-}
 
 // SQLC YAML File
 type SQLCYAML struct {

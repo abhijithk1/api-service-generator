@@ -65,10 +65,13 @@ func TestRunMigration(t *testing.T) {
 	dbInputs := models.DBInputs{
 		DBMS: "postgres",
 		GoModule: "example",
-		PsqlUser: "root",
-		PsqlPassword: "password",
+		Postgres: models.PostgresDriver{		
+			PsqlUser: "root",
+			PsqlPassword: "password",
+		},
 		DBName: "database",
 		WrkDir: "file",
+		DriverPackage: "package",
 	}
 
 	fileName := dbInputs.WrkDir + migrationUpFilePath + "migrate.go"
@@ -177,8 +180,10 @@ func TestMigration_Success(t *testing.T) {
 	}
 
 	dbInput := models.DBInputs{
-		PsqlUser:     "root",
-		PsqlPassword: "password",
+		Postgres: models.PostgresDriver{			
+			PsqlUser:     "root",
+			PsqlPassword: "password",
+		},
 		DBName:       "postgres",
 		WrkDir:       "wrkdir",
 	}
@@ -207,8 +212,10 @@ func TestMigration_InitialiseError(t *testing.T) {
 	}
 
 	dbInput := models.DBInputs{
-		PsqlUser:     "root",
-		PsqlPassword: "password",
+		Postgres: models.PostgresDriver{		
+			PsqlUser:     "root",
+			PsqlPassword: "password",
+		},
 		DBName:       "postgres",
 		WrkDir:       "wrkdir1",
 	}
@@ -247,8 +254,10 @@ func TestMigration_WriteSchemaUpFIleError(t *testing.T) {
 	}
 
 	dbInput := models.DBInputs{
-		PsqlUser:     "root",
-		PsqlPassword: "password",
+		Postgres: models.PostgresDriver{			
+			PsqlUser:     "root",
+			PsqlPassword: "password",
+		},
 		DBName:       "postgres",
 		WrkDir:       "wrkdir2",
 	}
@@ -293,8 +302,10 @@ func TestMigration_WriteSchemaDownFileError(t *testing.T) {
 	}
 
 	dbInput := models.DBInputs{
-		PsqlUser:     "root",
-		PsqlPassword: "password",
+		Postgres: models.PostgresDriver{		
+			PsqlUser:     "root",
+			PsqlPassword: "password",
+		},
 		DBName:       "postgres",
 		WrkDir:       "wrkdir3",
 	}

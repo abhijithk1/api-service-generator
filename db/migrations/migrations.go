@@ -113,16 +113,16 @@ import (
 	"database/sql"
 	util "{{.GoModule}}/{{.WrkDir}}/utils"
 
-    _ "github.com/lib/pq"
+    _ "{{.DriverPackage}}"
 	"github.com/IBM/alchemy-logging/src/go/alog"
     "github.com/golang-migrate/migrate/v4"
-    "github.com/golang-migrate/migrate/v4/database/postgres"
+    "github.com/golang-migrate/migrate/v4/database/{{.DBMS}}"
     _ "github.com/golang-migrate/migrate/v4/source/file"
 )
 
 func RunMigration(db *sql.DB, targetRevision int) (err error) {
 	dbDriver := util.GetAppConfig().DBDriver
-	driver, err := postgres.WithInstance(db, &postgres.Config{})
+	driver, err := {{.DBMS}}.WithInstance(db, &{{.DBMS}}.Config{})
 	if err != nil {
 		return
 	}

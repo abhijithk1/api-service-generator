@@ -47,17 +47,24 @@ api-service-generator go-template --name myservice
 
 The CLI will prompt you to enter the following details:
 
-1. **Database Driver**: (Currently supports only `postgres`)
-2. **Container Name**: Name for the PostgreSQL Docker container _(Default: `postgres_db`)_
-3. **Container Port**: Port for the PostgreSQL Docker container _(Default: `6432`)_
-4. **PostgreSQL User**: PostgreSQL user _(Default: `postgres`)_
-5. **PostgreSQL Password**: PostgreSQL password _(Default: `password`)_
-6. **Database Name**: Name of the PostgreSQL database_ (Default: `value of POSTGRES_USER`)_
-7. **Table Name**: Name of the database table _(Default: `api_table`)_
-8. **API Group**: API group for the generated service _(Default: `dummy`)_
-9. **Module Path**: Base path for the Go module _(Default: `example`)_
+1. **Database Driver**: Choose between postgres and mysql *(Default: `postgres`)*
+2. **Container Name**: Name for the Docker container *(Default: `dummy_db`)*
+3. **Container Port**:  Port for the Docker container *(Default: `6432`)*
+4. **Database Name**: Name of the database  *(Default: `dummy_db`)*
+5. **Table Name**: Name of the database table *(Default: `api_table`)*
+6. **API Group**: API group for the generated service *(Default: `dummy`)*
+7. **Module Path**: Base path for the Go module *(Default: `example/api-service`)*
+   
+#### PostgresQL Specific Prompts
+1. **POSTGRES_USER**: PostgreSQL user *(Default: `postgres`)*
+2. **POSTGRES_PASSWORD**: PostgreSQL password *(Default: `password`)*
 
-The CLI will automatically spin up a PostgreSQL Docker container based on the provided inputs and configure the API service to connect to it.
+#### MySQL Specific Prompts
+1. **MYSQL_ROOT_PASSWORD**: MySQL root password *(Default: `my-root-secret`)*
+2. **MYSQL_USER**: MySQL user *(Default: `mysql`)*
+3. **MYSQL_PASSWORD**: MySQL password *(Default: `password`)*
+
+The CLI will automatically spin up a Docker container based on the provided inputs and configure the API service to connect to it.
 
 ## Project Structure
 
@@ -114,7 +121,7 @@ The generated project has the following structure:
 
 To run the generated API service:
 
-1. Ensure the PostgreSQL Docker container is already running.
+1. Ensure the Docker container is already running.
 2. Run the API service:
 
     ```sh

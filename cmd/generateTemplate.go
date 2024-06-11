@@ -47,20 +47,22 @@ func runGenerateTemplate(cmd *cobra.Command, args []string) {
 	apiInputs.WrkDir = dbInputs.WrkDir
 
 	reader := bufio.NewReader(os.Stdin)
-	dbInputs.DBMS = promptForInput(reader, "Enter the Database Driver (currently supports only Postgres): ", "postgres", common.IsValidString)
-	dbInputs.ContainerName = promptForInput(reader, "Enter the name for the Postgres Docker container: ", "postgres_db", common.IsValidString)
-	dbInputs.ContainerPort = promptForInt(reader, "Enter the name for the Postgres Docker container port: ", 6432)
-	dbInputs.PsqlUser = promptForInput(reader, "Enter the POSTGRES_USER: ", "postgres", common.IsValidString)
-	dbInputs.PsqlPassword = promptForInput(reader, "Enter the POSTGRES_PASSWORD: ", "password", common.IsValidString)
-	dbInputs.DBName = promptForInput(reader, "Enter the Name of the Database: ", dbInputs.PsqlUser, common.IsValidString)
+	dbInputs.DBMS = promptForInput(reader, "Enter the Database Driver: ", "postgres", common.IsValidString)
+	dbInputs.ContainerName = promptForInput(reader, "Enter the name for the Docker container: ", "dummy_db", common.IsValidString)
+	dbInputs.ContainerPort = promptForInt(reader, "Enter the name for the Docker container port: ", 6432)
+	err := driverInputs(reader, &dbInputs)
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+	dbInputs.DBName = promptForInput(reader, "Enter the Name of the Database: ", "dummy_db", common.IsValidString)
 	dbInputs.TableName = promptForInput(reader, "Enter a Table Name: ", "api_table", common.IsValidString)
 	apiInputs.TableName = dbInputs.TableName
 	apiInputs.APIGroup = promptForInput(reader, "Enter an API Group: ", "dummy", common.IsValidString)
-	apiInputs.GoModule = promptForInput(reader, "Enter a Go Module Base Path: ", "example", func(s string) bool {return true})
+	apiInputs.GoModule = promptForInput(reader, "Enter a Go Module Base Path: ", "example/api-service", func(s string) bool {return true})
 	dbInputs.GoModule = apiInputs.GoModule
 
 	steps := []func() error{
-		func() error { return common.Initialise(apiInputs.GoModule, dbInputs.WrkDir) },
+		func() error { return common.Initialise(apiInputs.GoModule, &dbInputs) },
 		func() error { return db.Setup(dbInputs) },
 		func() error { return api.Setup(apiInputs) },
 		func() error { return mw.SetupMiddleWare(apiInputs) },
@@ -71,7 +73,7 @@ func runGenerateTemplate(cmd *cobra.Command, args []string) {
 	for _, step := range steps {
 		if err := step(); err != nil {
 			fmt.Printf("Error: Setup step failed: %v", err)
-			cleanup.CleanUp(dbInputs.WrkDir, dbInputs.ContainerName)
+			cleanup.CleanUp(dbInputs.WrkDir, dbInputs.ContainerName, dbInputs.DBMS)
 			return
 		}
 	}
@@ -110,4 +112,20 @@ func promptForInt(reader *bufio.Reader, prompt string, defaultValue int) int {
 		return defaultValue
 	}
 	return value
+}
+
+func driverInputs(reader *bufio.Reader, dbInputs *models.DBInputs) error {
+	switch dbInputs.DBMS {
+	case "postgres":
+		dbInputs.Postgres.PsqlUser = promptForInput(reader, "Enter the POSTGRES_USER: ", "postgres", func(s string) bool {return true})
+		dbInputs.Postgres.PsqlPassword = promptForInput(reader, "Enter the POSTGRES_PASSWORD: ", "password", func(s string) bool {return true})
+		return nil
+	case "mysql":
+		dbInputs.MySQL.MysqlRootPassword = promptForInput(reader, "Enter the MYSQL_ROOT_PASSWORD: ", "my-root-secret", func(s string) bool {return true})
+		dbInputs.MySQL.MysqlUser = promptForInput(reader, "Enter the MYSQL_USER: ", "mysql", func(s string) bool {return true})
+		dbInputs.MySQL.MysqlPassword = promptForInput(reader, "Enter the MYSQL_PASSWORD: ", "password", func(s string) bool {return true})
+		return nil
+	default:
+		return fmt.Errorf("driver not supported")
+	}
 }

@@ -15,14 +15,14 @@ var (
 	connectionPath = "/pkg/db/"
 )
 
-func runSQLC(wrkDir string) (err error) {
+func runSQLC(driver, wrkDir string) (err error) {
 	err = initialiseSQLC(wrkDir)
 	if err != nil {
 		return
 	}
 	fmt.Println("\n\n*** Successfully initialised SLQC `postgres_db` ***")
 
-	err = editSQLCYAML(wrkDir)
+	err = editSQLCYAML(driver, wrkDir)
 	if err != nil {
 		return
 	}
@@ -55,7 +55,7 @@ func generateSQLC(wrkDir string) (err error) {
 	return nil
 }
 
-func editSQLCYAML(wrkDir string) error {
+func editSQLCYAML(driver, wrkDir string) error {
 	sqlcYaml := models.SQLCYAML{
 		Version: "1",
 		Packages: []models.Packages{
@@ -64,11 +64,12 @@ func editSQLCYAML(wrkDir string) error {
 				Path:          "./pkg/db",
 				Schema:        "./pkg/db/migrations",
 				Queries:       "./pkg/db/query/",
-				Engine:        "postgresql",
 				EmitInterface: false,
 			},
 		},
 	}
+
+	sqlcEngine(driver, &sqlcYaml)
 
 	sqlcYamlMarshal, err := common.MarshalYAML(sqlcYaml)
 	if err != nil {
@@ -84,18 +85,18 @@ func editSQLCYAML(wrkDir string) error {
 	return nil
 }
 
-func Setup(dbInputs models.DBInputs) error{
-	switch dbInputs.DBMS {
-	case "postgres":
-		return setupPostgres(dbInputs)
-	default:
-		fmt.Printf("The DBMS %s is not SUpported currently", dbInputs.DBMS)
-	}
+// func Setup(dbInputs models.DBInputs) error{
+// 	switch dbInputs.DBMS {
+// 	case "postgres":
+// 		return setupPostgres(dbInputs)
+// 	default:
+// 		fmt.Printf("The DBMS %s is not Supported currently", dbInputs.DBMS)
+// 	}
 
-	return nil
-}
+// 	return nil
+// }
 
-func setupPostgres(dbInputs models.DBInputs) (err error) {
+func Setup(dbInputs models.DBInputs) (err error) {
 	fmt.Println("*** Database setup ***")
 
 	fmt.Println("\n*** Running Postgres in Docker Container ***")
@@ -128,7 +129,7 @@ func setupPostgres(dbInputs models.DBInputs) (err error) {
 
 	fmt.Println("\n\n*** Query are successfully written ***")
 
-	err = runSQLC(dbInputs.WrkDir)
+	err = runSQLC(dbInputs.DBMS, dbInputs.WrkDir)
 	if err != nil {
 		fmt.Println("Error : ", err)
 		return
@@ -136,11 +137,7 @@ func setupPostgres(dbInputs models.DBInputs) (err error) {
 
 	fmt.Println("\n\n*** Successfully setup SQLC ***")
 
-	dbConnection := models.DBConnection {
-		WrkDir: dbInputs.WrkDir,
-		GoModule: dbInputs.GoModule,
-	}
-	err = connectDb(dbConnection)
+	err = connectDb(dbInputs)
 	if err != nil {
 		fmt.Println("Error : ", err)
 		return
@@ -172,7 +169,7 @@ import (
 	util "{{.GoModule}}/{{.WrkDir}}/utils"
 
 	"github.com/IBM/alchemy-logging/src/go/alog"
-	_ "github.com/lib/pq"
+	_ "{{.DriverPackage}}"
 )
 
 var ch = alog.UseChannel("MAIN")
@@ -194,7 +191,7 @@ func GetConnection() *sql.DB {
 }
 `
 
-func connectDb(dbConnection models.DBConnection) error {
+func connectDb(dbConnection models.DBInputs) error {
 	fileName := dbConnection.WrkDir + connectionPath + "connection.go"
 	return common.CreateFileAndItsContent(fileName, dbConnection, connection)
 
@@ -225,4 +222,13 @@ func TestMain(m *testing.M) {
 func mainTest(wrkDir string) error {
 	fileName := wrkDir + connectionPath + "main_test.go"
 	return common.CreateFileAndItsContent(fileName, nil, mainTestContent)
+}
+
+func sqlcEngine(driver string, sqlc *models.SQLCYAML) {
+	switch driver {
+	case "postgres":
+		sqlc.Packages[0].Engine = "postgresql"
+	case "mysql":
+		sqlc.Packages[0].Engine = "mysql"
+	}
 }

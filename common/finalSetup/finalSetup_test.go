@@ -2,6 +2,7 @@ package finalsetup
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"testing"
 
@@ -49,13 +50,15 @@ func TestCreateMakeFile(t *testing.T) {
 	mockCmdsExecutor.AssertExpectations(t)
 }
 
-func TestCreateENVFile(t *testing.T) {
+func TestCreateENVFile_Postgres(t *testing.T) {
 	mockCmdsExecutor := mocks.NewMockCmdsExecutor()
 	common.DefaultExecutor = mockCmdsExecutor
 
 	dbInputs := models.DBInputs{
-		PsqlUser: "user",
-		PsqlPassword: "password",
+		Postgres: models.PostgresDriver{
+			PsqlUser: "user",
+			PsqlPassword: "password",
+		},
 		ContainerPort: 6432,
 		DBMS: "postgres",
 		DBName: "data_db",
@@ -63,12 +66,52 @@ func TestCreateENVFile(t *testing.T) {
 	}
 	filename := dbInputs.WrkDir + "/app.env"
 
-	mockCmdsExecutor.On("CreateFileAndItsContent", filename, dbInputs, envFile).Return(nil)
+	newEnvFile := fmt.Sprintf(envFile, PostgresDBSource)
+
+	mockCmdsExecutor.On("CreateFileAndItsContent", filename, dbInputs, newEnvFile).Return(nil)
 
 	err := createENVFile(dbInputs)
 	assert.NoError(t, err)
 
 	mockCmdsExecutor.AssertExpectations(t)
+}
+
+func TestCreateENVFile_MySql(t *testing.T) {
+	mockCmdsExecutor := mocks.NewMockCmdsExecutor()
+	common.DefaultExecutor = mockCmdsExecutor
+
+	dbInputs := models.DBInputs{
+		MySQL: models.MySQLDriver{
+			MysqlRootPassword: "secret",
+			MysqlUser: "user",
+			MysqlPassword: "password",
+		},
+		ContainerPort: 6432,
+		DBMS: "mysql",
+		DBName: "data_db",
+		WrkDir: "dir",
+	}
+	filename := dbInputs.WrkDir + "/app.env"
+
+	newEnvFile := fmt.Sprintf(envFile, MysqlDBSource)
+
+	mockCmdsExecutor.On("CreateFileAndItsContent", filename, dbInputs, newEnvFile).Return(nil)
+
+	err := createENVFile(dbInputs)
+	assert.NoError(t, err)
+
+	mockCmdsExecutor.AssertExpectations(t)
+}
+
+func TestCreateENVFile_Default(t *testing.T) {
+
+	dbInputs := models.DBInputs{
+		DBMS: "another driver",
+	}
+
+	err := createENVFile(dbInputs)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "driver not supported")
 }
 
 func TestFinalSetup_Success(t *testing.T) {
@@ -82,8 +125,10 @@ func TestFinalSetup_Success(t *testing.T) {
 		GoModule: "example",
 	}
 	dbInputs := models.DBInputs{
-		PsqlUser: "user",
-		PsqlPassword: "password",
+		Postgres: models.PostgresDriver{		
+			PsqlPassword: "password",
+			PsqlUser: "user",
+		},
 		ContainerPort: 6432,
 		DBMS: "postgres",
 		DBName: "data_db",
@@ -93,9 +138,11 @@ func TestFinalSetup_Success(t *testing.T) {
 	makeFilename := apiInputs.WrkDir + "/Makefile"
 	envFilename := dbInputs.WrkDir + "/app.env"
 	httpFileName := apiInputs.WrkDir + "/api.http"
+
+	newEnvFile := fmt.Sprintf(envFile, PostgresDBSource)
 	
 	mockCmdsExecutor.On("CreateFileAndItsContent", mainFilename, apiInputs, mainContent).Return(nil)
-	mockCmdsExecutor.On("CreateFileAndItsContent", envFilename, dbInputs, envFile).Return(nil)
+	mockCmdsExecutor.On("CreateFileAndItsContent", envFilename, dbInputs, newEnvFile).Return(nil)
 	mockCmdsExecutor.On("CreateFileAndItsContent", makeFilename, nil, makeFileContent).Return(nil)
 	mockCmdsExecutor.On("CreateFileAndItsContent", httpFileName, apiInputs, api_HTTP).Return(nil)
 
@@ -115,8 +162,10 @@ func TestFinalSetup_APIHTTPFileError(t *testing.T) {
 		GoModule: "example",
 	}
 	dbInputs := models.DBInputs{
-		PsqlUser: "user",
-		PsqlPassword: "password",
+		Postgres: models.PostgresDriver{		
+			PsqlUser: "user",
+			PsqlPassword: "password",
+		},
 		ContainerPort: 6432,
 		DBMS: "postgres",
 		DBName: "data_db",
@@ -126,9 +175,11 @@ func TestFinalSetup_APIHTTPFileError(t *testing.T) {
 	makeFilename := apiInputs.WrkDir + "/Makefile"
 	envFilename := dbInputs.WrkDir + "/app.env"
 	httpFileName := apiInputs.WrkDir + "/api.http"
+
+	newEnvFile := fmt.Sprintf(envFile, PostgresDBSource)
 	
 	mockCmdsExecutor.On("CreateFileAndItsContent", mainFilename, apiInputs, mainContent).Return(nil)
-	mockCmdsExecutor.On("CreateFileAndItsContent", envFilename, dbInputs, envFile).Return(nil)
+	mockCmdsExecutor.On("CreateFileAndItsContent", envFilename, dbInputs, newEnvFile).Return(nil)
 	mockCmdsExecutor.On("CreateFileAndItsContent", makeFilename, nil, makeFileContent).Return(nil)
 	mockCmdsExecutor.On("CreateFileAndItsContent", httpFileName, apiInputs, api_HTTP).Return(errors.New("error in creating api.http"))
 
@@ -148,8 +199,10 @@ func TestFinalSetup_MakefileError(t *testing.T) {
 		GoModule: "example",
 	}
 	dbInputs := models.DBInputs{
-		PsqlUser: "user",
-		PsqlPassword: "password",
+		Postgres: models.PostgresDriver{		
+			PsqlUser: "user",
+			PsqlPassword: "password",
+		},
 		ContainerPort: 6432,
 		DBMS: "postgres",
 		DBName: "data_db",
@@ -159,9 +212,10 @@ func TestFinalSetup_MakefileError(t *testing.T) {
 	makeFilename := apiInputs.WrkDir + "/Makefile"
 	envFilename := dbInputs.WrkDir + "/app.env"
 
+	newEnvFile := fmt.Sprintf(envFile, PostgresDBSource)
 
 	mockCmdsExecutor.On("CreateFileAndItsContent", mainFilename, apiInputs, mainContent).Return(nil)
-	mockCmdsExecutor.On("CreateFileAndItsContent", envFilename, dbInputs, envFile).Return(nil)
+	mockCmdsExecutor.On("CreateFileAndItsContent", envFilename, dbInputs, newEnvFile).Return(nil)
 	mockCmdsExecutor.On("CreateFileAndItsContent", makeFilename, nil, makeFileContent).Return(errors.New("error in creating MakeFile"))
 
 	FinalSetup(apiInputs, dbInputs)
@@ -180,8 +234,10 @@ func TestFinalSetup_EnvFileError(t *testing.T) {
 		GoModule: "example",
 	}
 	dbInputs := models.DBInputs{
-		PsqlUser: "user",
-		PsqlPassword: "password",
+		Postgres: models.PostgresDriver{	
+			PsqlUser: "user",
+			PsqlPassword: "password",
+		},
 		ContainerPort: 6432,
 		DBMS: "postgres",
 		DBName: "data_db",
@@ -190,9 +246,10 @@ func TestFinalSetup_EnvFileError(t *testing.T) {
 	mainFilename := apiInputs.WrkDir + "/main.go"
 	envFilename := dbInputs.WrkDir + "/app.env"
 
+	newEnvFile := fmt.Sprintf(envFile,PostgresDBSource)
 
 	mockCmdsExecutor.On("CreateFileAndItsContent", mainFilename, apiInputs, mainContent).Return(nil)
-	mockCmdsExecutor.On("CreateFileAndItsContent", envFilename, dbInputs, envFile).Return(errors.New("error in creating app.env"))
+	mockCmdsExecutor.On("CreateFileAndItsContent", envFilename, dbInputs, newEnvFile).Return(errors.New("error in creating app.env"))
 
 	FinalSetup(apiInputs, dbInputs)
 

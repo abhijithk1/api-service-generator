@@ -6,13 +6,13 @@ import (
 	"github.com/abhijithk1/api-service-generator/common"
 )
 
-func CleanUp(wrkDir, containerName string) {
+func CleanUp(wrkDir, containerName, driver string) {
 	err := removeDirectory(wrkDir)
 	if err != nil {
 		fmt.Println("Error : ", err)
 	}
 	if containerName != "" {
-		err = removeDockerContainer(containerName)
+		err = removeDockerContainer(containerName, driver)
 		if err != nil {
 			fmt.Println("Error : ", err)
 		}
@@ -32,10 +32,17 @@ func removeDirectory(wrkDir string) error {
 	return nil
 }
 
-func removeDockerContainer(containerName string) error{
+func removeDockerContainer(containerName, driver string) error {
+	var volume string
 	cmdStr := "docker"
-	cmdArgs1 := []string{"kill", containerName}
-	cmdArgs2 := []string{"rm", containerName}
+	switch driver {
+	case "postgres":
+		volume = "pgdata"
+	case "mysql":
+		volume = "mysql_data"
+	}
+	cmdArgs1 := []string{"rm", "-f", containerName}
+	cmdArgs2 := []string{"volume", "rm", volume}
 
 	output, err := common.ExecuteCmds(cmdStr, cmdArgs1, ".")
 	if err != nil {
@@ -43,7 +50,7 @@ func removeDockerContainer(containerName string) error{
 		return err
 	}
 
-	fmt.Printf("\n\nSuccessfully stopped the container: %s\n", containerName)
+	fmt.Printf("\n\nSuccessfully removed the container: %s\n", containerName)
 
 	output, err = common.ExecuteCmds(cmdStr, cmdArgs2, ".")
 	if err != nil {
@@ -51,7 +58,7 @@ func removeDockerContainer(containerName string) error{
 		return err
 	}
 
-	fmt.Printf("\n\nSuccessfully removed the container: %s\n", containerName)
-	
+	fmt.Printf("\n\nSuccessfully removed the container volume: %s\n", containerName)
+
 	return nil
 }

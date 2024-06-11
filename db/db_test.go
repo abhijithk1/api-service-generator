@@ -86,10 +86,11 @@ func TestGenerateSQLC_Error(t *testing.T) {
 	mockExec.AssertExpectations(t)
 }
 
-func TestEditSQLCYaml_Success(t *testing.T) {
+func TestEditSQLCYaml_SuccessPostgres(t *testing.T) {
 	mockExec := mocks.NewMockCmdsExecutor()
 	common.DefaultExecutor = mockExec
 	wrkDir := "new-dir"
+	driver := "postgres"
 	sqlcYaml := models.SQLCYAML{
 		Version: "1",
 		Packages: []models.Packages{
@@ -107,7 +108,35 @@ func TestEditSQLCYaml_Success(t *testing.T) {
 	fileName := wrkDir + sqlcFileName
 	mockExec.On("CreateFileAndItsContent", fileName, nil, string(sqlcYamlMarshal)).Return(nil)
 
-	err := editSQLCYAML(wrkDir)
+	err := editSQLCYAML(driver, wrkDir)
+	assert.NoError(t, err)
+
+	mockExec.AssertExpectations(t)
+}
+
+func TestEditSQLCYaml_SuccessMySql(t *testing.T) {
+	mockExec := mocks.NewMockCmdsExecutor()
+	common.DefaultExecutor = mockExec
+	wrkDir := "new-dir"
+	driver := "mysql"
+	sqlcYaml := models.SQLCYAML{
+		Version: "1",
+		Packages: []models.Packages{
+			{
+				Name:          "db",
+				Path:          "./pkg/db",
+				Schema:        "./pkg/db/migrations",
+				Queries:       "./pkg/db/query/",
+				Engine:        "mysql",
+				EmitInterface: false,
+			},
+		},
+	}
+	sqlcYamlMarshal, _ := yaml.Marshal(sqlcYaml)
+	fileName := wrkDir + sqlcFileName
+	mockExec.On("CreateFileAndItsContent", fileName, nil, string(sqlcYamlMarshal)).Return(nil)
+
+	err := editSQLCYAML(driver, wrkDir)
 	assert.NoError(t, err)
 
 	mockExec.AssertExpectations(t)
@@ -117,6 +146,7 @@ func TestEditSQLCYaml_ErrorWritingFile(t *testing.T) {
 	mockExec := mocks.NewMockCmdsExecutor()
 	common.DefaultExecutor = mockExec
 	wrkDir := "new-dir"
+	driver := "postgres"
 	sqlcYaml := models.SQLCYAML{
 		Version: "1",
 		Packages: []models.Packages{
@@ -135,7 +165,7 @@ func TestEditSQLCYaml_ErrorWritingFile(t *testing.T) {
 	fileName := wrkDir + sqlcFileName
 	mockExec.On("CreateFileAndItsContent", fileName, nil, string(sqlcYamlMarshal)).Return(errors.New("error in editing sqlc.yaml"))
 
-	err := editSQLCYAML(wrkDir)
+	err := editSQLCYAML(driver, wrkDir)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "error writing modified sqlc.yaml")
 
@@ -147,6 +177,7 @@ func TestEditSQLCYaml_ErrorMarshalling(t *testing.T) {
 	common.MarshalYAML = mockCommon.MarshalYAML
 
 	wrkDir := "new-dir"
+	driver := "postgres"
 	sqlcYaml := models.SQLCYAML{
 		Version: "1",
 		Packages: []models.Packages{
@@ -162,7 +193,7 @@ func TestEditSQLCYaml_ErrorMarshalling(t *testing.T) {
 	}
 
 	mockCommon.On("MarshalYAML", sqlcYaml).Return([]byte(""), errors.New("marshal error"))
-	err := editSQLCYAML(wrkDir)
+	err := editSQLCYAML(driver, wrkDir)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "error in marshalling the sqlc.yaml content")
 
@@ -177,6 +208,7 @@ func TestRunSQLC_Success(t *testing.T) {
 	cmdArgs := []string{"init"}
 
 	wrkDir := "file"
+	driver := "postgres"
 
 	sqlcYaml := models.SQLCYAML{
 		Version: "1",
@@ -202,7 +234,7 @@ func TestRunSQLC_Success(t *testing.T) {
 	mockExec.On("ExecuteCmds", cmdStr1, cmdArgs1, wrkDir).Return([]byte(""), nil)
 
 
-	err := runSQLC(wrkDir)
+	err := runSQLC(driver, wrkDir)
 	assert.NoError(t, err)
 
 	mockExec.AssertExpectations(t)
@@ -216,6 +248,7 @@ func TestRunSQLC_GenerateError(t *testing.T) {
 	cmdArgs := []string{"init"}
 
 	wrkDir := "file"
+	driver := "postgres"
 
 	sqlcYaml := models.SQLCYAML{
 		Version: "1",
@@ -241,7 +274,7 @@ func TestRunSQLC_GenerateError(t *testing.T) {
 	mockExec.On("ExecuteCmds", cmdStr1, cmdArgs1, wrkDir).Return([]byte(""), errors.New("error in generating sqlc code"))
 
 
-	err := runSQLC(wrkDir)
+	err := runSQLC(driver, wrkDir)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "error in generating sqlc code")
 
@@ -256,6 +289,7 @@ func TestRunSQLC_EditSQLCError(t *testing.T) {
 	cmdArgs := []string{"init"}
 
 	wrkDir := "file"
+	driver := "postgres"
 
 	sqlcYaml := models.SQLCYAML{
 		Version: "1",
@@ -277,7 +311,7 @@ func TestRunSQLC_EditSQLCError(t *testing.T) {
 	mockExec.On("CreateFileAndItsContent", fileName, nil, string(sqlcYamlMarshal)).Return(errors.New("error in editing sqlc.yaml"))
 
 
-	err := runSQLC(wrkDir)
+	err := runSQLC(driver, wrkDir)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "error in editing sqlc.yaml")
 
@@ -292,63 +326,33 @@ func TestRunSQLC_InitialiseSQLCError(t *testing.T) {
 	cmdArgs := []string{"init"}
 
 	wrkDir := "file"
+	driver := "postgres"
 
 	common.MarshalYAML = yaml.Marshal
 
 	mockExec.On("ExecuteCmds", cmdStr, cmdArgs, wrkDir).Return([]byte(""), errors.New("error in initialising sqlc.yaml"))
 
-	err := runSQLC(wrkDir)
+	err := runSQLC(driver, wrkDir)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "error in initialising sqlc.yaml")
 
 	mockExec.AssertExpectations(t)
 }
 
-func TestSetup_Default(t *testing.T) {
-	dbInputs := models.DBInputs{
-		DBMS: "mysql",
-	}
-	Setup(dbInputs)
-}
-
-func TestSetup_Postgres(t *testing.T) {
-
-	//mock docker client
-	mockDocker := mocks.NewMockDocker()
-	docker.DefaultDockerClient = mockDocker
-
-	dbInputs := models.DBInputs{
-		DBMS: "postgres",
-		DBName: "database",
-		WrkDir: "dir",
-		ContainerName: "postgres_db",
-		ContainerPort: 6432,
-		PsqlUser: "user",
-		PsqlPassword: "password",
-		TableName: "table1",
-	}
-	
-	mockDocker.On("RunContainer", dbInputs).Return(errors.New("error in running container"))
-
-	Setup(dbInputs)
-
-	mockDocker.AssertExpectations(t)
-
-}
-
 func TestConnectDB(t *testing.T) {
 	mockExec := mocks.NewMockCmdsExecutor()
 	common.DefaultExecutor = mockExec
 
-	dbConnection := models.DBConnection{
+	dbInputs := models.DBInputs{
 		GoModule: "example",
 		WrkDir: "dir",
+		DriverPackage: "package",
 	}
 
-	fileName := dbConnection.WrkDir + connectionPath + "connection.go"
-	mockExec.On("CreateFileAndItsContent", fileName, dbConnection, connection).Return(nil)
+	fileName := dbInputs.WrkDir + connectionPath + "connection.go"
+	mockExec.On("CreateFileAndItsContent", fileName, dbInputs, connection).Return(nil)
 
-	err := connectDb(dbConnection)
+	err := connectDb(dbInputs)
 	assert.NoError(t, err)
 
 	mockExec.AssertExpectations(t)
@@ -368,7 +372,7 @@ func TestMainTest(t *testing.T) {
 	mockExec.AssertExpectations(t)
 }
 
-func TestSetupPostgres_Success(t *testing.T) {
+func TestSetup_Success(t *testing.T) {
 	//mock cmd executor
 	mockCmdsExecutor := mocks.NewMockCmdsExecutor()
 	common.DefaultExecutor = mockCmdsExecutor
@@ -391,10 +395,13 @@ func TestSetupPostgres_Success(t *testing.T) {
 		WrkDir: "dir",
 		ContainerName: "postgres_db",
 		ContainerPort: 6432,
-		PsqlUser: "user",
-		PsqlPassword: "password",
+		Postgres: models.PostgresDriver{		
+			PsqlUser: "user",
+			PsqlPassword: "password",
+		},
 		TableName: "table1",
 		GoModule: "example",
+		DriverPackage: "package",
 	}
 
 	initSchema := models.InitSchema{
@@ -424,10 +431,6 @@ func TestSetupPostgres_Success(t *testing.T) {
 	cmdArgs1 := []string{"generate"}
 	common.MarshalYAML = yaml.Marshal
 
-	dbConnection := models.DBConnection{
-		GoModule: "example",
-		WrkDir: "dir",
-	}
 
 	fileName := dbInputs.WrkDir + connectionPath + "connection.go"
 	
@@ -439,11 +442,11 @@ func TestSetupPostgres_Success(t *testing.T) {
 	mockCmdsExecutor.On("ExecuteCmds", cmdStr, cmdArgs, dbInputs.WrkDir).Return([]byte(""), nil)
 	mockCmdsExecutor.On("CreateFileAndItsContent", sqlcFileName, nil, string(sqlcYamlMarshal)).Return(nil)
 	mockCmdsExecutor.On("ExecuteCmds", cmdStr1, cmdArgs1, dbInputs.WrkDir).Return([]byte(""), nil)
-	mockCmdsExecutor.On("CreateFileAndItsContent", fileName, dbConnection, connection).Return(nil)
+	mockCmdsExecutor.On("CreateFileAndItsContent", fileName, dbInputs, connection).Return(nil)
 	mockMigration.On("RunMigration", dbInputs).Return(nil)
 	mockCmdsExecutor.On("CreateFileAndItsContent", mainTestFileName, nil, mainTestContent).Return(nil)
 
-	setupPostgres(dbInputs)
+	Setup(dbInputs)
 
 	mockCmdsExecutor.AssertExpectations(t)
 	mockDocker.AssertExpectations(t)
@@ -452,7 +455,7 @@ func TestSetupPostgres_Success(t *testing.T) {
 
 }
 
-func TestSetupPostgres_MainTestError(t *testing.T) {
+func TestSetup_MainTestError(t *testing.T) {
 	//mock cmd executor
 	mockCmdsExecutor := mocks.NewMockCmdsExecutor()
 	common.DefaultExecutor = mockCmdsExecutor
@@ -475,10 +478,13 @@ func TestSetupPostgres_MainTestError(t *testing.T) {
 		WrkDir: "dir",
 		ContainerName: "postgres_db",
 		ContainerPort: 6432,
-		PsqlUser: "user",
-		PsqlPassword: "password",
+		Postgres: models.PostgresDriver{		
+			PsqlUser: "user",
+			PsqlPassword: "password",
+		},
 		TableName: "table1",
 		GoModule: "example",
+		DriverPackage: "package",
 	}
 
 	initSchema := models.InitSchema{
@@ -507,10 +513,6 @@ func TestSetupPostgres_MainTestError(t *testing.T) {
 	cmdStr1 := "sqlc"
 	cmdArgs1 := []string{"generate"}
 	common.MarshalYAML = yaml.Marshal
-	dbConnection := models.DBConnection{
-		GoModule: "example",
-		WrkDir: "dir",
-	}
 
 	fileName := dbInputs.WrkDir + connectionPath + "connection.go"
 	
@@ -522,11 +524,11 @@ func TestSetupPostgres_MainTestError(t *testing.T) {
 	mockCmdsExecutor.On("ExecuteCmds", cmdStr, cmdArgs, dbInputs.WrkDir).Return([]byte(""), nil)
 	mockCmdsExecutor.On("CreateFileAndItsContent", sqlcFileName, nil, string(sqlcYamlMarshal)).Return(nil)
 	mockCmdsExecutor.On("ExecuteCmds", cmdStr1, cmdArgs1, dbInputs.WrkDir).Return([]byte(""), nil)
-	mockCmdsExecutor.On("CreateFileAndItsContent", fileName, dbConnection, connection).Return(nil)
+	mockCmdsExecutor.On("CreateFileAndItsContent", fileName, dbInputs, connection).Return(nil)
 	mockMigration.On("RunMigration", dbInputs).Return(nil)
 	mockCmdsExecutor.On("CreateFileAndItsContent", mainTestFileName, nil, mainTestContent).Return(errors.New("error in writing main_test.go"))
 
-	setupPostgres(dbInputs)
+	Setup(dbInputs)
 
 	mockCmdsExecutor.AssertExpectations(t)
 	mockDocker.AssertExpectations(t)
@@ -535,7 +537,7 @@ func TestSetupPostgres_MainTestError(t *testing.T) {
 
 }
 
-func TestSetupPostgres_RunMigrationError(t *testing.T) {
+func TestSetup_RunMigrationError(t *testing.T) {
 	//mock cmd executor
 	mockCmdsExecutor := mocks.NewMockCmdsExecutor()
 	common.DefaultExecutor = mockCmdsExecutor
@@ -558,10 +560,13 @@ func TestSetupPostgres_RunMigrationError(t *testing.T) {
 		WrkDir: "dir",
 		ContainerName: "postgres_db",
 		ContainerPort: 6432,
-		PsqlUser: "user",
-		PsqlPassword: "password",
+		Postgres: models.PostgresDriver{		
+			PsqlUser: "user",
+			PsqlPassword: "password",
+		},
 		TableName: "table1",
 		GoModule: "example",
+		DriverPackage: "package",
 	}
 
 	initSchema := models.InitSchema{
@@ -590,10 +595,6 @@ func TestSetupPostgres_RunMigrationError(t *testing.T) {
 	cmdStr1 := "sqlc"
 	cmdArgs1 := []string{"generate"}
 	common.MarshalYAML = yaml.Marshal
-	dbConnection := models.DBConnection{
-		GoModule: "example",
-		WrkDir: "dir",
-	}
 
 	fileName := dbInputs.WrkDir + connectionPath + "connection.go"
 	
@@ -603,10 +604,10 @@ func TestSetupPostgres_RunMigrationError(t *testing.T) {
 	mockCmdsExecutor.On("ExecuteCmds", cmdStr, cmdArgs, dbInputs.WrkDir).Return([]byte(""), nil)
 	mockCmdsExecutor.On("CreateFileAndItsContent", sqlcFileName, nil, string(sqlcYamlMarshal)).Return(nil)
 	mockCmdsExecutor.On("ExecuteCmds", cmdStr1, cmdArgs1, dbInputs.WrkDir).Return([]byte(""), nil)
-	mockCmdsExecutor.On("CreateFileAndItsContent", fileName, dbConnection, connection).Return(nil)
+	mockCmdsExecutor.On("CreateFileAndItsContent", fileName, dbInputs, connection).Return(nil)
 	mockMigration.On("RunMigration", dbInputs).Return(errors.New("error running migration"))
 
-	setupPostgres(dbInputs)
+	Setup(dbInputs)
 
 	mockCmdsExecutor.AssertExpectations(t)
 	mockDocker.AssertExpectations(t)
@@ -615,7 +616,7 @@ func TestSetupPostgres_RunMigrationError(t *testing.T) {
 
 }
 
-func TestSetupPostgres_ConnectionDBError(t *testing.T) {
+func TestSetup_ConnectionDBError(t *testing.T) {
 	//mock cmd executor
 	mockCmdsExecutor := mocks.NewMockCmdsExecutor()
 	common.DefaultExecutor = mockCmdsExecutor
@@ -638,10 +639,13 @@ func TestSetupPostgres_ConnectionDBError(t *testing.T) {
 		WrkDir: "dir",
 		ContainerName: "postgres_db",
 		ContainerPort: 6432,
-		PsqlUser: "user",
-		PsqlPassword: "password",
+		Postgres: models.PostgresDriver{			
+			PsqlUser: "user",
+			PsqlPassword: "password",
+		},
 		TableName: "table1",
 		GoModule: "example",
+		DriverPackage: "package",
 	}
 
 	initSchema := models.InitSchema{
@@ -670,10 +674,6 @@ func TestSetupPostgres_ConnectionDBError(t *testing.T) {
 	cmdStr1 := "sqlc"
 	cmdArgs1 := []string{"generate"}
 	common.MarshalYAML = yaml.Marshal
-	dbConnection := models.DBConnection{
-		GoModule: "example",
-		WrkDir: "dir",
-	}
 
 	fileName := dbInputs.WrkDir + connectionPath + "connection.go"
 	
@@ -683,9 +683,9 @@ func TestSetupPostgres_ConnectionDBError(t *testing.T) {
 	mockCmdsExecutor.On("ExecuteCmds", cmdStr, cmdArgs, dbInputs.WrkDir).Return([]byte(""), nil)
 	mockCmdsExecutor.On("CreateFileAndItsContent", sqlcFileName, nil, string(sqlcYamlMarshal)).Return(nil)
 	mockCmdsExecutor.On("ExecuteCmds", cmdStr1, cmdArgs1, dbInputs.WrkDir).Return([]byte(""), nil)
-	mockCmdsExecutor.On("CreateFileAndItsContent", fileName, dbConnection, connection).Return(errors.New("Error in connecting DB"))
+	mockCmdsExecutor.On("CreateFileAndItsContent", fileName, dbInputs, connection).Return(errors.New("Error in connecting DB"))
 
-	setupPostgres(dbInputs)
+	Setup(dbInputs)
 
 	mockCmdsExecutor.AssertExpectations(t)
 	mockDocker.AssertExpectations(t)
@@ -694,7 +694,7 @@ func TestSetupPostgres_ConnectionDBError(t *testing.T) {
 
 }
 
-func TestSetupPostgres_RunSQLCError(t *testing.T) {
+func TestSetup_RunSQLCError(t *testing.T) {
 	//mock cmd executor
 	mockCmdsExecutor := mocks.NewMockCmdsExecutor()
 	common.DefaultExecutor = mockCmdsExecutor
@@ -717,8 +717,10 @@ func TestSetupPostgres_RunSQLCError(t *testing.T) {
 		WrkDir: "dir",
 		ContainerName: "postgres_db",
 		ContainerPort: 6432,
-		PsqlUser: "user",
-		PsqlPassword: "password",
+		Postgres: models.PostgresDriver{		
+			PsqlUser: "user",
+			PsqlPassword: "password",
+		},
 		TableName: "table1",
 	}
 
@@ -735,7 +737,7 @@ func TestSetupPostgres_RunSQLCError(t *testing.T) {
 	mockQuery.On("SetTableQuery", initSchema).Return(nil)
 	mockCmdsExecutor.On("ExecuteCmds", cmdStr, cmdArgs, dbInputs.WrkDir).Return([]byte(""), errors.New("Error in running sqlc"))
 
-	setupPostgres(dbInputs)
+	Setup(dbInputs)
 
 	mockCmdsExecutor.AssertExpectations(t)
 	mockDocker.AssertExpectations(t)
@@ -744,7 +746,7 @@ func TestSetupPostgres_RunSQLCError(t *testing.T) {
 
 }
 
-func TestSetupPostgres_SetTableQueryError(t *testing.T) {
+func TestSetup_SetTableQueryError(t *testing.T) {
 	//mock docker client
 	mockDocker := mocks.NewMockDocker()
 	docker.DefaultDockerClient = mockDocker
@@ -763,8 +765,10 @@ func TestSetupPostgres_SetTableQueryError(t *testing.T) {
 		WrkDir: "dir",
 		ContainerName: "postgres_db",
 		ContainerPort: 6432,
-		PsqlUser: "user",
-		PsqlPassword: "password",
+		Postgres: models.PostgresDriver{		
+			PsqlUser: "user",
+			PsqlPassword: "password",
+		},
 		TableName: "table1",
 	}
 
@@ -777,7 +781,7 @@ func TestSetupPostgres_SetTableQueryError(t *testing.T) {
 	mockMigration.On("Migration", dbInputs, initSchema).Return(nil)
 	mockQuery.On("SetTableQuery", initSchema).Return(errors.New("error in setting table query"))
 
-	setupPostgres(dbInputs)
+	Setup(dbInputs)
 
 	mockDocker.AssertExpectations(t)
 	mockMigration.AssertExpectations(t)
@@ -785,7 +789,7 @@ func TestSetupPostgres_SetTableQueryError(t *testing.T) {
 
 }
 
-func TestSetupPostgres_SMigrationError(t *testing.T) {
+func TestSetup_MigrationError(t *testing.T) {
 	//mock docker client
 	mockDocker := mocks.NewMockDocker()
 	docker.DefaultDockerClient = mockDocker
@@ -800,8 +804,10 @@ func TestSetupPostgres_SMigrationError(t *testing.T) {
 		WrkDir: "dir",
 		ContainerName: "postgres_db",
 		ContainerPort: 6432,
-		PsqlUser: "user",
-		PsqlPassword: "password",
+		Postgres: models.PostgresDriver{		
+			PsqlUser: "user",
+			PsqlPassword: "password",
+		},
 		TableName: "table1",
 	}
 
@@ -813,14 +819,14 @@ func TestSetupPostgres_SMigrationError(t *testing.T) {
 	mockDocker.On("RunContainer", dbInputs).Return(nil)
 	mockMigration.On("Migration", dbInputs, initSchema).Return(errors.New("error in migrating"))
 
-	setupPostgres(dbInputs)
+	Setup(dbInputs)
 
 	mockDocker.AssertExpectations(t)
 	mockMigration.AssertExpectations(t)
 
 }
 
-func TestSetupPostgres_RunningContainer(t *testing.T) {
+func TestSetup_RunningContainer(t *testing.T) {
 	//mock docker client
 	mockDocker := mocks.NewMockDocker()
 	docker.DefaultDockerClient = mockDocker
@@ -831,14 +837,16 @@ func TestSetupPostgres_RunningContainer(t *testing.T) {
 		WrkDir: "dir",
 		ContainerName: "postgres_db",
 		ContainerPort: 6432,
-		PsqlUser: "user",
-		PsqlPassword: "password",
+		Postgres: models.PostgresDriver{		
+			PsqlUser: "user",
+			PsqlPassword: "password",
+		},
 		TableName: "table1",
 	}
 	
 	mockDocker.On("RunContainer", dbInputs).Return(errors.New("error in running container"))
 
-	setupPostgres(dbInputs)
+	Setup(dbInputs)
 
 	mockDocker.AssertExpectations(t)
 

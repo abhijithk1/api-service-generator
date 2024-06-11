@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/abhijithk1/api-service-generator/mocks"
+	"github.com/abhijithk1/api-service-generator/models"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -292,15 +293,18 @@ func TestExecuteGoGets_Error(t *testing.T) {
 	mockExec.AssertExpectations(t)
 }
 
-func TestInitialise_Success(t *testing.T) {
+func TestInitialise_SuccessPostgres(t *testing.T) {
 	// Create a mock executor
 	mockExec := mocks.NewMockCmdsExecutor()
 	DefaultExecutor = mockExec
 
 	// Set up test data
 	path := "example/path"
-	name := "example"
-	modName := fmt.Sprintf("%s/%s", path, name)
+	dbInputs := models.DBInputs{
+		DBMS: "postgres",
+		WrkDir: "example",
+	}
+	modName := fmt.Sprintf("%s/%s", path, dbInputs.WrkDir)
 	initialDirs := []string{"dir1", "dir2"}
 	InitialDirectories = initialDirs
 	DependentPackages = []string{"github.com/some/package"}
@@ -308,32 +312,57 @@ func TestInitialise_Success(t *testing.T) {
 	cmdGoStr := "go"
 	cmdArgs1 := []string{"mod", "init", modName}
 	cmdArgs2 := []string{"get", "github.com/some/package"}
+	cmdArgs3 := []string{"get", "github.com/lib/pq"}
 
 	// Set up mock expectations
-	mockExec.On("CreateDirectory", name).Return(nil)
-	mockExec.On("ExecuteCmds", cmdGoStr, cmdArgs1, name).Return([]byte(""), nil)
-	mockExec.On("ExecuteCmds", cmdGoStr, cmdArgs2, name).Return([]byte(""), nil)
+	mockExec.On("CreateDirectory", dbInputs.WrkDir).Return(nil)
+	mockExec.On("ExecuteCmds", cmdGoStr, cmdArgs1, dbInputs.WrkDir).Return([]byte(""), nil)
+	mockExec.On("ExecuteCmds", cmdGoStr, cmdArgs2, dbInputs.WrkDir).Return([]byte(""), nil)
+	mockExec.On("ExecuteCmds", cmdGoStr, cmdArgs3, dbInputs.WrkDir).Return([]byte(""), nil)
 	for _, dir := range initialDirs {
-		dir = name + dir
+		dir = dbInputs.WrkDir + dir
 		mockExec.On("CreateDirectory", dir).Return(nil)
 	}
 
-	//  // Capture the output of Initialise
-	//  output := captureOutput(func() {
-	// })
-	Initialise(path, name)
+	Initialise(path, &dbInputs)
 
-	//  // Assertions
-	//  assert.Contains(t, output, fmt.Sprintf("*** Creating the Service Directory %s ***", name))
-	//  assert.Contains(t, output, fmt.Sprintf("*** Successfully created the Service Directory %s ***", name))
-	//  assert.Contains(t, output, "*** Creating go.mod ***")
-	//  assert.Contains(t, output, "*** Successfully created go.mod ***")
-	//  assert.Contains(t, output, "*** Updating go packages ***")
-	//  assert.Contains(t, output, "*** Successfully updated go packages ***")
-	//  assert.Contains(t, output, "*** the initial Directories ***")
-	//  assert.Contains(t, output, "*** *** Successfully Created the initial Directories ***")
+	mockExec.AssertExpectations(t)
 
-	// Assert that all expectations on the mock were met
+}
+
+func TestInitialise_SuccessMySql(t *testing.T) {
+	// Create a mock executor
+	mockExec := mocks.NewMockCmdsExecutor()
+	DefaultExecutor = mockExec
+
+	// Set up test data
+	path := "example/path"
+	dbInputs := models.DBInputs{
+		DBMS: "mysql",
+		WrkDir: "example",
+	}
+	modName := fmt.Sprintf("%s/%s", path, dbInputs.WrkDir)
+	initialDirs := []string{"dir1", "dir2"}
+	InitialDirectories = initialDirs
+	DependentPackages = []string{"github.com/some/package"}
+
+	cmdGoStr := "go"
+	cmdArgs1 := []string{"mod", "init", modName}
+	cmdArgs2 := []string{"get", "github.com/some/package"}
+	cmdArgs3 := []string{"get", "github.com/go-sql-driver/mysql"}
+
+	// Set up mock expectations
+	mockExec.On("CreateDirectory", dbInputs.WrkDir).Return(nil)
+	mockExec.On("ExecuteCmds", cmdGoStr, cmdArgs1, dbInputs.WrkDir).Return([]byte(""), nil)
+	mockExec.On("ExecuteCmds", cmdGoStr, cmdArgs2, dbInputs.WrkDir).Return([]byte(""), nil)
+	mockExec.On("ExecuteCmds", cmdGoStr, cmdArgs3, dbInputs.WrkDir).Return([]byte(""), nil)
+	for _, dir := range initialDirs {
+		dir = dbInputs.WrkDir + dir
+		mockExec.On("CreateDirectory", dir).Return(nil)
+	}
+
+	Initialise(path, &dbInputs)
+
 	mockExec.AssertExpectations(t)
 
 }
@@ -345,20 +374,16 @@ func TestInitialise_ErrorCreateDirectory(t *testing.T) {
 
 	// Set up test data
 	path := "example/path"
-	name := "example"
+	dbInputs := models.DBInputs{
+		DBMS: "postgres",
+		WrkDir: "example",
+	}
 
 	// Set up mock expectations
-	mockExec.On("CreateDirectory", name).Return(errors.New("error in creating file"))
+	mockExec.On("CreateDirectory", dbInputs.WrkDir).Return(errors.New("error in creating file"))
 
-	// Capture the output of Initialise
-	// output := captureOutput(func() {
-	// })
-	Initialise(path, name)
+	Initialise(path, &dbInputs)
 
-	// assert.Contains(t, output, fmt.Sprintf("*** Creating the Service Directory %s ***", name))
-	// assert.Contains(t, output, "error in creating file")
-
-	// Assert that all expectations on the mock were met
 	mockExec.AssertExpectations(t)
 
 }
@@ -370,16 +395,19 @@ func TestInitialise_ErrorExecutingGoMod(t *testing.T) {
 
 	// Set up test data
 	path := "example/path"
-	name := "example"
-	modName := fmt.Sprintf("%s/%s", path, name)
+	dbInputs := models.DBInputs{
+		DBMS: "postgres",
+		WrkDir: "example",
+	}
+	modName := fmt.Sprintf("%s/%s", path, dbInputs.WrkDir)
 	cmdGoStr := "go"
 	cmdArgs1 := []string{"mod", "init", modName}
 
 	// Set up mock expectations
-	mockExec.On("CreateDirectory", name).Return(nil)
-	mockExec.On("ExecuteCmds", cmdGoStr, cmdArgs1, name).Return([]byte(""), errors.New("error in go mod command"))
+	mockExec.On("CreateDirectory", dbInputs.WrkDir).Return(nil)
+	mockExec.On("ExecuteCmds", cmdGoStr, cmdArgs1, dbInputs.WrkDir).Return([]byte(""), errors.New("error in go mod command"))
 
-	Initialise(path, name)
+	Initialise(path, &dbInputs)
 
 	mockExec.AssertExpectations(t)
 
@@ -392,19 +420,22 @@ func TestInitialise_ErrorExecutingGoGets(t *testing.T) {
 
 	// Set up test data
 	path := "example/path"
-	name := "example"
-	modName := fmt.Sprintf("%s/%s", path, name)
+	dbInputs := models.DBInputs{
+		DBMS: "postgres",
+		WrkDir: "example",
+	}
+	modName := fmt.Sprintf("%s/%s", path, dbInputs.WrkDir)
 	cmdGoStr := "go"
 	cmdArgs1 := []string{"mod", "init", modName}
 	cmdArgs2 := []string{"get", "github.com/some/package"}
 	DependentPackages = []string{"github.com/some/package"}
 
 	// Set up mock expectations
-	mockExec.On("CreateDirectory", name).Return(nil)
-	mockExec.On("ExecuteCmds", cmdGoStr, cmdArgs1, name).Return([]byte(""), nil)
-	mockExec.On("ExecuteCmds", cmdGoStr, cmdArgs2, name).Return([]byte(""), errors.New("error executing go get command"))
+	mockExec.On("CreateDirectory", dbInputs.WrkDir).Return(nil)
+	mockExec.On("ExecuteCmds", cmdGoStr, cmdArgs1, dbInputs.WrkDir).Return([]byte(""), nil)
+	mockExec.On("ExecuteCmds", cmdGoStr, cmdArgs2, dbInputs.WrkDir).Return([]byte(""), errors.New("error executing go get command"))
 
-	Initialise(path, name)
+	Initialise(path, &dbInputs)
 
 	mockExec.AssertExpectations(t)
 }
@@ -416,8 +447,11 @@ func TestInitialise_ErrorCreatingInitalDirectories(t *testing.T) {
 
 	// Set up test data
 	path := "example/path"
-	name := "example"
-	modName := fmt.Sprintf("%s/%s", path, name)
+	dbInputs := models.DBInputs{
+		DBMS: "postgres",
+		WrkDir: "example",
+	}
+	modName := fmt.Sprintf("%s/%s", path, dbInputs.WrkDir)
 	initialDirs := []string{"dir1"}
 	InitialDirectories = initialDirs
 	DependentPackages = []string{"github.com/some/package"}
@@ -425,17 +459,19 @@ func TestInitialise_ErrorCreatingInitalDirectories(t *testing.T) {
 	cmdGoStr := "go"
 	cmdArgs1 := []string{"mod", "init", modName}
 	cmdArgs2 := []string{"get", "github.com/some/package"}
+	cmdArgs3 := []string{"get", "github.com/lib/pq"}
 
 	// Set up mock expectations
-	mockExec.On("CreateDirectory", name).Return(nil)
-	mockExec.On("ExecuteCmds", cmdGoStr, cmdArgs1, name).Return([]byte(""), nil)
-	mockExec.On("ExecuteCmds", cmdGoStr, cmdArgs2, name).Return([]byte(""), nil)
+	mockExec.On("CreateDirectory", dbInputs.WrkDir).Return(nil)
+	mockExec.On("ExecuteCmds", cmdGoStr, cmdArgs1, dbInputs.WrkDir).Return([]byte(""), nil)
+	mockExec.On("ExecuteCmds", cmdGoStr, cmdArgs2, dbInputs.WrkDir).Return([]byte(""), nil)
+	mockExec.On("ExecuteCmds", cmdGoStr, cmdArgs3, dbInputs.WrkDir).Return([]byte(""), nil)
 	for _, dir := range InitialDirectories {
-		dir = name + dir
+		dir = dbInputs.WrkDir + dir
 		mockExec.On("CreateDirectory", dir).Return(errors.New("error creating initial directory"))
 	}
 
-	Initialise(path, name)
+	Initialise(path, &dbInputs)
 
 	mockExec.AssertExpectations(t)
 }
