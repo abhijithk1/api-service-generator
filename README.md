@@ -171,6 +171,6 @@ Contributions are welcome! Please open an issue or submit a pull request on GitH
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
-## Upcoming Changes
+## Change Logs
 
-The in-progres changes, upcoming changes, and proposals are listed. See the [Upcoming Changes](UPCOMING_CHANGES.md) file for details.
+The in-progres changes, upcoming changes, and proposals are listed. See the [CHANGELOG](CHANGELOG.md) file for details.
