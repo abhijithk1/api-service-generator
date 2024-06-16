@@ -170,3 +170,7 @@ Contributions are welcome! Please open an issue or submit a pull request on GitH
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+## Upcoming Changes
+
+The in-progres changes, upcoming changes, and proposals are listed. See the [Upcoming Changes](UPCOMING_CHANGES.md) file for details.
